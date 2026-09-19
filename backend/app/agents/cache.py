@@ -73,11 +73,13 @@ class SimHashCache:
                     resp_str = payload.get("response", "")
                     if "import pandas" in resp_str or "pd.read_csv" in resp_str:
                         continue
-                    dist = self.hamming_distance(target_hash, c_hash)
+                    parsed_hash = int(c_hash) if isinstance(c_hash, (int, str)) else 0
+                    dist = self.hamming_distance(target_hash, parsed_hash)
                     if dist <= self.max_hamming_dist:
                         # Update in-memory index
-                        self.in_memory_index.append((c_hash, payload))
+                        self.in_memory_index.append((parsed_hash, payload))
                         return payload, dist
+
 
         return None
 
@@ -91,8 +93,9 @@ class SimHashCache:
             self.in_memory_index = self.in_memory_index[-200:]  # Keep max 200 items
 
         # Persist index
-        serializable_list = [{"hash": h, "payload": p} for h, p in self.in_memory_index]
+        serializable_list = [{"hash": str(h), "payload": p} for h, p in self.in_memory_index]
         await memory_store.set("simhash_cache_index", serializable_list)
+
 
 # Global SimHash cache instance
 simhash_cache = SimHashCache()
