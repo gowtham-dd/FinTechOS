@@ -4,12 +4,13 @@ import aiosqlite
 import redis.asyncio as redis
 from typing import Optional, Dict, Any
 from app.config import settings
+from app.db.mongo import mongo_db
 
 class DualMemoryStore:
     """
-    Production dual-layer memory store:
-    Attempts connection to Redis. If Redis is unavailable, automatically
-    falls back to SQLite3 file database.
+    Production multi-layer memory store:
+    Attempts connection to Redis. If Redis is unavailable, uses MongoDB Atlas
+    cloud collection 'memory_store', with automatic SQLite3 local fallback.
     """
     def __init__(self):
         self.redis_client: Optional[redis.Redis] = None
@@ -27,16 +28,19 @@ class DualMemoryStore:
             print("Memory Store: Successfully connected to Redis.")
         except Exception:
             self.use_redis = False
-            print(f"Memory Store: Redis unavailable. Using SQLite fallback at {self.sqlite_db_path}")
-            async with aiosqlite.connect(self.sqlite_db_path) as db:
-                await db.execute("""
-                    CREATE TABLE IF NOT EXISTS memory_store (
-                        key TEXT PRIMARY KEY,
-                        value TEXT,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
-                await db.commit()
+            if mongo_db.is_connected:
+                print("Memory Store: Redis unavailable. Connected to MongoDB Atlas Cloud 'memory_store'.")
+            else:
+                print(f"Memory Store: Using SQLite fallback at {self.sqlite_db_path}")
+                async with aiosqlite.connect(self.sqlite_db_path) as db:
+                    await db.execute("""
+                        CREATE TABLE IF NOT EXISTS memory_store (
+                            key TEXT PRIMARY KEY,
+                            value TEXT,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """)
+                    await db.commit()
 
     async def set(self, key: str, value: Dict[str, Any]) -> None:
         json_val = json.dumps(value)
@@ -46,6 +50,15 @@ class DualMemoryStore:
                 return
             except Exception:
                 self.use_redis = False
+
+        # Try MongoDB Atlas
+        coll = mongo_db.get_collection("memory_store")
+        if coll is not None:
+            try:
+                coll.update_one({"key": key}, {"$set": {"key": key, "value": value}}, upsert=True)
+                return
+            except Exception as e:
+                print(f"MemoryStore Mongo Set Warning: {e}")
 
         # SQLite fallback
         async with aiosqlite.connect(self.sqlite_db_path) as db:
@@ -63,6 +76,22 @@ class DualMemoryStore:
                     return json.loads(val.decode("utf-8"))
             except Exception:
                 self.use_redis = False
+
+        # Try MongoDB Atlas
+        coll = mongo_db.get_collection("memory_store")
+        if coll is not None:
+            try:
+                doc = coll.find_one({"key": key}, {"_id": 0})
+                if doc and "value" in doc:
+                    val = doc["value"]
+                    if isinstance(val, str):
+                        try:
+                            return json.loads(val)
+                        except Exception:
+                            return {"data": val}
+                    return val
+            except Exception as e:
+                print(f"MemoryStore Mongo Get Warning: {e}")
 
         # SQLite fallback
         async with aiosqlite.connect(self.sqlite_db_path) as db:
