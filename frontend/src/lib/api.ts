@@ -1,4 +1,29 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001/api/v1";
+let configuredBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+
+async function smartFetch(path: string, init?: RequestInit): Promise<Response> {
+  const primaryUrl = `${configuredBaseUrl}${path}`;
+  try {
+    return await fetch(primaryUrl, init);
+  } catch (err: any) {
+    const isConnRefused = err?.message?.includes("fetch") || err?.name === "TypeError";
+    if (isConnRefused) {
+      const altPort = configuredBaseUrl.includes("8000") ? "8001" : "8000";
+      const altBaseUrl = configuredBaseUrl.includes("8000")
+        ? configuredBaseUrl.replace("8000", "8001")
+        : configuredBaseUrl.replace("8001", "8000");
+      const altUrl = `${altBaseUrl}${path}`;
+      console.warn(`[API Client] Connection refused on ${primaryUrl}. Automatic fallback to port ${altPort} -> ${altUrl}`);
+      try {
+        const altRes = await fetch(altUrl, init);
+        configuredBaseUrl = altBaseUrl; // Cache working backend URL
+        return altRes;
+      } catch (altErr) {
+        throw err;
+      }
+    }
+    throw err;
+  }
+}
 
 export interface OptimizationResult {
   total_financial_impact_usd: number;
@@ -130,7 +155,7 @@ export interface RunResponse {
 
 export async function parsePrompt(prompt: string): Promise<{ spec: ExperimentSpec }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/quant/parse`, {
+    const res = await smartFetch(`/quant/parse`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
@@ -142,7 +167,7 @@ export async function parsePrompt(prompt: string): Promise<{ spec: ExperimentSpe
     return {
       spec: {
         universe_id: "CORE_DEMO_V1",
-        assets: ["BTC-USD", "GLD", "NVDA", "SPY"],
+        assets: ["BTC-USD", "GC=F", "NVDA", "SPY"],
         strategy_config: { family: "SMA_CROSS", fast_period: 20, slow_period: 50 },
         initial_capital: 100000,
         sizing: "FULL",
@@ -157,7 +182,7 @@ export async function parsePrompt(prompt: string): Promise<{ spec: ExperimentSpe
 }
 
 export async function runExperiment(spec: ExperimentSpec): Promise<RunResponse> {
-  const res = await fetch(`${API_BASE_URL}/quant/run`, {
+  const res = await smartFetch(`/quant/run`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(spec),
@@ -167,7 +192,7 @@ export async function runExperiment(spec: ExperimentSpec): Promise<RunResponse> 
 }
 
 export async function revealHoldout(user_id: string, asset: string, family_id: string, prereg_hash: string) {
-  const res = await fetch(`${API_BASE_URL}/quant/reveal`, {
+  const res = await smartFetch(`/quant/reveal`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user_id, asset, family_id, prereg_hash }),
@@ -177,24 +202,118 @@ export async function revealHoldout(user_id: string, asset: string, family_id: s
 }
 
 export async function fetchAssetDetails(assetId: string) {
-  const res = await fetch(`${API_BASE_URL}/quant/assets/${assetId}`);
+  const res = await smartFetch(`/quant/assets/${assetId}`);
   if (!res.ok) throw new Error("Failed to fetch asset details");
   return await res.json();
 }
 
 export async function fetchCalibrationCard() {
-  const res = await fetch(`${API_BASE_URL}/quant/calibration`);
+  const res = await smartFetch(`/quant/calibration`);
   if (!res.ok) throw new Error("Failed to fetch calibration");
   return await res.json();
 }
 
 export async function runPlaceboTest(judgeSeed: number) {
-  const res = await fetch(`${API_BASE_URL}/quant/placebo-seed`, {
+  const res = await smartFetch(`/quant/placebo-seed`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ judge_seed: judgeSeed }),
   });
   if (!res.ok) throw new Error("Placebo test failed");
+  return await res.json();
+}
+
+// ----------------------------------------------------
+// AI Strategy Assistant & Independent Modules Endpoints
+// ----------------------------------------------------
+
+export async function fetchStrategyModules() {
+  const res = await smartFetch(`/quant/modules`);
+  if (!res.ok) throw new Error("Failed to fetch strategy modules");
+  return await res.json();
+}
+
+export async function sendStrategyChatPrompt(prompt: string, asset: string = "GC=F", initialCapital: number = 100000) {
+  console.log(`[ResearchLab API] POST /quant/agent/chat | Prompt: "${prompt}" | Asset: ${asset}`);
+  try {
+    const res = await smartFetch(`/quant/agent/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, asset, initial_capital: initialCapital }),
+    });
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+      const detailMsg = errorBody?.detail || "Strategy AI chat agent execution failed";
+      console.error(`[ResearchLab API] Chat Agent Failed (${res.status}):`, detailMsg);
+      throw new Error(detailMsg);
+    }
+    const data = await res.json();
+    console.log(`[ResearchLab API] Chat Agent Success | Asset: ${data.asset} | Total Return: ${((data.summary?.total_return || 0) * 100).toFixed(1)}%`);
+    return data;
+  } catch (err: any) {
+    console.error(`[ResearchLab API] Network/Internal Error:`, err?.message || err);
+    throw err;
+  }
+}
+
+export async function fetchStrategyHistory() {
+  console.log(`[ResearchLab API] GET /quant/strategy/history`);
+  const res = await smartFetch(`/quant/strategy/history`);
+  if (!res.ok) {
+    console.error(`[ResearchLab API] Failed to fetch strategy history (${res.status})`);
+    throw new Error("Failed to fetch strategy history");
+  }
+  const data = await res.json();
+  console.log(`[ResearchLab API] Strategy history loaded (${data.count || 0} runs)`);
+  return data;
+}
+
+export async function clearStrategyHistory() {
+  console.log(`[ResearchLab API] DELETE /quant/strategy/history`);
+  const res = await smartFetch(`/quant/strategy/history`, {
+    method: "DELETE"
+  });
+  if (!res.ok) throw new Error("Failed to clear strategy history");
+  return await res.json();
+}
+
+export async function runMonteCarloSimulation(asset: string = "GC=F", nPaths: number = 1000, horizon: number = 252) {
+  const res = await smartFetch(`/quant/simulate/monte-carlo`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset, n_paths: nPaths, horizon }),
+  });
+  if (!res.ok) throw new Error("Monte Carlo simulation failed");
+  return await res.json();
+}
+
+export async function runVaRAnalysis(asset: string = "BTC-USD", portfolioValue: number = 100000) {
+  const res = await smartFetch(`/quant/risk/var`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset, portfolio_value: portfolioValue }),
+  });
+  if (!res.ok) throw new Error("VaR analysis failed");
+  return await res.json();
+}
+
+export async function runMLRegimeDetection(asset: string = "NVDA", nRegimes: number = 3, algorithm: string = "HMM") {
+  const res = await smartFetch(`/quant/regimes/ml`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset, n_regimes: nRegimes, algorithm }),
+  });
+  if (!res.ok) throw new Error("ML regime detection failed");
+  return await res.json();
+}
+
+export async function runPortfolioOptimization(assets: string[] = ["GC=F", "BTC-USD", "NVDA"], nSimulations: number = 10000) {
+  const res = await smartFetch(`/quant/portfolio/opt`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ assets, n_simulations: nSimulations }),
+  });
+  if (!res.ok) throw new Error("Portfolio optimization failed");
   return await res.json();
 }
 

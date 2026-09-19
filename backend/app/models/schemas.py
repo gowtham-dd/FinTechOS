@@ -57,7 +57,7 @@ class GridSpec(BaseModel):
 
 class ExperimentSpec(BaseModel):
     universe_id: str = "CORE_DEMO_V1"
-    assets: List[Literal["BTC-USD", "GLD", "NVDA", "SPY", "TLT", "SLV", "ETH", "INTC"]] = Field(
+    assets: List[Literal["BTC-USD", "GLD", "GC=F", "NVDA", "SPY", "TLT", "SLV", "ETH", "ETH-USD", "INTC"]] = Field(
         default=["BTC-USD", "GLD", "NVDA", "SPY"]
     )
     strategy_config: StrategyParams = Field(default_factory=SMACrossParams)

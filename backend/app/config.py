@@ -5,9 +5,10 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Quantum FinTech AgentOS"
     API_V1_STR: str = "/api/v1"
     
-    # LLM Settings
-    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    DEFAULT_LLM_MODEL: str = "llama-3.3-70b-versatile"
+    # Featherless LLM Settings
+    FEATHERLESS_API_KEY: str = os.getenv("FEATHERLESS_API_KEY", "")
+    FEATHERLESS_MODEL: str = os.getenv("FEATHERLESS_MODEL", "unsloth/Llama-3.3-70B-Instruct")
+    FEATHERLESS_BASE_URL: str = os.getenv("FEATHERLESS_BASE_URL", "https://api.featherless.ai/v1")
     
     # Memory Settings
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
