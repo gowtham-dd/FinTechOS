@@ -110,6 +110,40 @@ async def login(req: LoginRequest):
         }
     }
 
+@router.post("/auth/demo", response_model=AuthTokenResponse)
+async def login_demo():
+    """1-Click Sample Quant Account Access for testing & evaluation."""
+    demo_email = "demo.researcher@fintech-os.io"
+    demo_name = "Senior Quant Researcher"
+    coll = mongo_db.get_collection("users")
+    
+    user_id = "usr_demo_quant_master"
+    if coll is not None:
+        user = coll.find_one({"email": demo_email})
+        if not user:
+            user_doc = {
+                "user_id": user_id,
+                "email": demo_email,
+                "password_hash": hash_password("demo123456"),
+                "full_name": demo_name,
+                "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
+            }
+            coll.insert_one(user_doc)
+        else:
+            user_id = user["user_id"]
+            demo_name = user.get("full_name", demo_name)
+
+    token = create_jwt_token(user_id, demo_email, demo_name)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user_id,
+            "email": demo_email,
+            "full_name": demo_name
+        }
+    }
+
 @router.get("/auth/me")
 async def get_current_user(authorization: Optional[str] = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
