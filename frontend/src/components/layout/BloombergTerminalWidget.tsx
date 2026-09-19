@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { Terminal, Maximize2, Minimize2, Plus, X, ChevronUp, ChevronDown, Play, Sparkles } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -19,6 +20,11 @@ interface TerminalTab {
 }
 
 export function BloombergTerminalWidget() {
+  const pathname = usePathname();
+
+  // Hide terminal CLI widget strictly on the Home Page ("/")
+  if (pathname === "/") return null;
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [tabs, setTabs] = useState<TerminalTab[]>([

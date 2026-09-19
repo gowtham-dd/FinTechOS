@@ -70,16 +70,19 @@ export function AuthModal({ isOpen, onClose, user, onAuthSuccess, onLogout }: Au
       });
 
       const data = await res.json();
-      if (res.ok && data.access_token) {
+      
+      // Strict Validation: Ensure status is 200 and valid access_token is returned
+      if (res.ok && res.status === 200 && data && data.access_token && data.user) {
         onAuthSuccess(data.access_token, data.user);
         showToast(mode === "signup" ? "Account created successfully!" : "Signed in successfully!");
         setTimeout(() => onClose(), 800);
       } else {
-        setErrorMsg(data.detail || "Authentication failed. Please verify credentials.");
+        // STRICT REJECTION: Invalid credentials must NOT log the user in!
+        setErrorMsg(data.detail || "Invalid email address or password. Please verify credentials.");
       }
     } catch (err: any) {
-      console.error(err);
-      setErrorMsg("Unable to connect to backend server. Please verify backend is running.");
+      console.error("Auth submit error:", err);
+      setErrorMsg("Unable to connect to backend server. Please verify backend server is running.");
     } finally {
       setLoading(false);
     }

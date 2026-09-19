@@ -143,6 +143,7 @@ export default function HomePage() {
   const [selectedTimeframe, setSelectedTimeframe] = useState<"1D" | "1M" | "1Y" | "ALL">("1Y");
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authUser, setAuthUser] = useState<any>(null);
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -151,12 +152,26 @@ export default function HomePage() {
     } catch (e) {
       console.error(e);
     }
+
+    const handleRequireAuth = (e: any) => {
+      setAuthModalOpen(true);
+      if (e.detail?.targetHref) {
+        setPendingNavHref(e.detail.targetHref);
+      }
+    };
+    window.addEventListener("require-auth", handleRequireAuth);
+    return () => window.removeEventListener("require-auth", handleRequireAuth);
   }, []);
 
   const handleAuthSuccess = (token: string, user: any) => {
     localStorage.setItem("fintech_os_auth_token", token);
     localStorage.setItem("fintech_os_auth_user", JSON.stringify(user));
     setAuthUser(user);
+    if (pendingNavHref) {
+      const target = pendingNavHref;
+      setPendingNavHref(null);
+      router.push(target);
+    }
   };
 
   const handleLogout = () => {
@@ -164,6 +179,7 @@ export default function HomePage() {
     localStorage.removeItem("fintech_os_auth_user");
     setAuthUser(null);
     setAuthModalOpen(false);
+    setPendingNavHref(null);
   };
 
   // SVG Scalers for Panel 1 (Stock Chart)

@@ -16,6 +16,18 @@ export const Navbar: React.FC = () => {
     { label: "Portfolio & Allocation", href: "/portfolio-optimization" },
   ];
 
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
+    try {
+      const token = localStorage.getItem("fintech_os_auth_token");
+      if (!token) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("require-auth", { detail: { targetHref: href } }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <>
       <header className="sticky top-0 z-50 bg-[#FAF6F0]/90 backdrop-blur-md border-b border-stone-200/50 px-4 sm:px-6 lg:px-8 py-3.5 transition-all">
@@ -43,6 +55,7 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={item.label}
                   href={item.href}
+                  onClick={(e) => handleNavClick(e, item.href)}
                   className={`text-[13.5px] xl:text-[14.5px] font-semibold transition-colors duration-150 ${
                     isActive
                       ? "text-claude-orange font-bold"
@@ -84,7 +97,10 @@ export const Navbar: React.FC = () => {
               <Link
                 key={item.label}
                 href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={(e) => {
+                  setMobileMenuOpen(false);
+                  handleNavClick(e, item.href);
+                }}
                 className="px-3 py-2 text-sm font-semibold text-gray-800 hover:text-claude-orange hover:bg-white rounded-lg transition-colors"
               >
                 {item.label}
