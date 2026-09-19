@@ -1251,7 +1251,7 @@ export default function PortfolioOptimizationPage() {
                       -${fmtUSD(Math.abs(activeMetrics.varParametric))}
                     </span>
                     <span className="text-[10px] text-stone-600 block leading-tight font-sans">
-                      Gaussian variance-covariance distribution ($\mu - 1.645\sigma$).
+                      Gaussian variance-covariance distribution (Mean − 1.645 StdDev).
                     </span>
                   </div>
 

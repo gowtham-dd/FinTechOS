@@ -350,7 +350,7 @@ export default function RobustnessPage() {
                   </div>
 
                   <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 font-medium leading-relaxed">
-                    <strong>💡 Audit Verdict Plain English Summary:</strong> Holdout degradation passed cleanly ($12.5\% \le 35\%$). However, because 28 prior trials were run, the <strong>Deflated Sharpe Ratio (DSR = 42.0%)</strong> indicates a high likelihood of data-snooping bias. The system correctly rejects the strategy to protect live trading capital!
+                    <strong>💡 Audit Verdict Plain English Summary:</strong> Holdout degradation passed cleanly (12.5% ≤ 35%). However, because 28 prior trials were run, the <strong>Deflated Sharpe Ratio (DSR = 42.0%)</strong> indicates a high likelihood of data-snooping bias. The system correctly rejects the strategy to protect live trading capital!
                   </div>
                 </div>
               )}

@@ -147,7 +147,7 @@ function AssetsContent() {
               DATA BOUNDARY SAFETY GUARD: DEV DATA ONLY (t ≤ 2023-12-31)
             </h3>
             <p className="text-xs text-amber-800/80 mt-1 leading-relaxed">
-              Data displayed below covers the development partition ($70\%$). The final 24 months are cryptographically isolated in the Holdout Vault to prevent data-peeking.
+              Data displayed below covers the development partition (70%). The final 24 months are cryptographically isolated in the Holdout Vault to prevent data-peeking.
             </p>
           </div>
         </div>
