@@ -25,7 +25,7 @@ In quantitative finance, over **90% of backtested strategies fail when deployed 
 FinTech Agent OS functions as an **impartial scientific judge**. It eliminates self-deception and backtest overfitting through a **10-node agentic validation workflow**:
 
 1. 🔒 **Atomic 30% Cryptographic Holdout Vault**: Locks the final 24 months of market data into an un-peekable vault.
-2. ⛓️ **Write-Ahead SHA-256 Audit Ledger**: Cryptographically hashes every trial attempt into an append-only ledger, tracking total attempts ($N_{\text{eff}}$) to calculate the **Deflated Sharpe Ratio (DSR)**.
+2. ⛓️ **Write-Ahead SHA-256 Audit Ledger**: Cryptographically hashes every trial attempt into an append-only ledger, tracking total attempts (`N_eff`) to calculate the **Deflated Sharpe Ratio (DSR)**.
 3. 🎲 **Stationary Block Bootstrap (500+ Iterations)**: Resamples historical returns using Politis & Romano block bootstrap to generate non-parametric 95% confidence intervals.
 4. 🤖 **Adversarial AI Skeptic Agent**: Red-teams backtests against survivorship bias, regime sensitivity, and transaction cost decay.
 5. ⚛️ **Quantum QUBO Portfolio Engine**: Formulates asset allocation as Quadratic Unconstrained Binary Optimization for classical simulated annealing and quantum annealers.
@@ -56,54 +56,70 @@ The backend is built with **Python 3.11+** and **FastAPI**, engineered with modu
 ### 1. `app/analytics` — Quantitative Analytics Core
 
 #### 📄 `metrics.py` — Financial & Risk Metric Engine
-Calculates institutional performance and risk metrics from daily return series $R_t$:
+Calculates institutional performance and risk metrics from daily return series `R_t`:
 
-* **Annualized Return ($\text{CAGR}$)**:
-  $$\text{CAGR} = \left( \prod_{t=1}^{T} (1 + R_t) \right)^{\frac{252}{T}} - 1$$
+* **Annualized Return (CAGR)**:
+
+$$\text{CAGR} = \left( \prod_{t=1}^{T} (1 + R_t) \right)^{\frac{252}{T}} - 1$$
 
 * **Sharpe Ratio**:
-  $$\text{Sharpe} = \frac{\mathbb{E}[R_p - R_f]}{\sigma_p} \times \sqrt{252}$$
-  *where $R_f$ is risk-free rate, $\sigma_p$ is annualized standard deviation of excess returns.*
+
+$$\text{Sharpe} = \frac{\mathbb{E}[R_p - R_f]}{\sigma_p} \times \sqrt{252}$$
+
+*(where R_f is risk-free rate, σ_p is annualized standard deviation of excess returns.)*
 
 * **Sortino Ratio**:
-  $$\text{Sortino} = \frac{\mathbb{E}[R_p - R_f]}{\sigma_d} \times \sqrt{252}$$
-  *where $\sigma_d = \sqrt{\frac{1}{T} \sum_{t=1}^T \min(0, R_t - R_f)^2}$ is downside semi-deviation.*
+
+$$\text{Sortino} = \frac{\mathbb{E}[R_p - R_f]}{\sigma_d} \times \sqrt{252}$$
+
+*(where σ_d is downside semi-deviation.)*
 
 * **Calmar Ratio**:
-  $$\text{Calmar} = \frac{\text{CAGR}}{|\text{Maximum Drawdown}|}$$
 
-* **Maximum Drawdown ($\text{MDD}$)**:
-  $$\text{MDD} = \max_{t \in [1, T]} \left( \frac{\max_{s \le t} P_s - P_t}{\max_{s \le t} P_s} \right)$$
+$$\text{Calmar} = \frac{\text{CAGR}}{|\text{Maximum Drawdown}|}$$
 
-* **Value at Risk ($\text{VaR}_{\alpha}$ - 95% / 99% Historical & Parametric)**:
-  $$\text{VaR}_{\alpha}(R) = - Q_{1-\alpha}(R) = - \inf \{ r \in \mathbb{R} : P(R \le r) \ge 1-\alpha \}$$
+* **Maximum Drawdown (MDD)**:
 
-* **Conditional Value at Risk ($\text{CVaR}_{\alpha}$ / Expected Shortfall)**:
-  $$\text{CVaR}_{\alpha}(R) = -\mathbb{E}[R \mid R \le -\text{VaR}_{\alpha}(R)]$$
+$$\text{MDD} = \max_{t \in [1, T]} \left( \frac{\max_{s \le t} P_s - P_t}{\max_{s \le t} P_s} \right)$$
+
+* **Value at Risk (VaR - 95% / 99% Historical & Parametric)**:
+
+$$\text{VaR}_{\alpha}(R) = - Q_{1-\alpha}(R) = - \inf \{ r \in \mathbb{R} : P(R \le r) \ge 1-\alpha \}$$
+
+* **Conditional Value at Risk (CVaR / Expected Shortfall)**:
+
+$$\text{CVaR}_{\alpha}(R) = -\mathbb{E}[R \mid R \le -\text{VaR}_{\alpha}(R)]$$
 
 ---
 
 #### 📄 `engine.py` — Vectorized & Event-Driven Backtest Simulator
-* **Order Execution Protocol**: Signals generated at bar $t$ are filled at the opening price of bar $t+1$ to eliminate lookahead bias.
+* **Order Execution Protocol**: Signals generated at bar `t` are filled at the opening price of bar `t+1` to eliminate lookahead bias.
 * **Slippage & Market Impact Model**:
-  $$\text{Fill Price} = P_{t+1, \text{open}} \times \left(1 + \text{sign}(\text{side}) \cdot \left( \frac{\text{Slippage Bps}}{10000} + \gamma \sqrt{\frac{V_{\text{order}}}{V_{\text{daily}}}} \right) \right)$$
-* **Transaction Fee Model**: Deducts fixed bps per trade execution ($\text{Commission Bps} / 10000$).
+
+$$\text{Fill Price} = P_{t+1, \text{open}} \times \left(1 + \text{sign}(\text{side}) \cdot \left( \frac{\text{Slippage Bps}}{10000} + \gamma \sqrt{\frac{V_{\text{order}}}{V_{\text{daily}}}} \right) \right)$$
+
+* **Transaction Fee Model**: Deducts fixed bps per trade execution (`Commission Bps / 10000`).
 
 ---
 
 #### 📄 `robustness.py` — Overfitting Diagnostics & Bootstrap Engine
-* **Stationary Block Bootstrap (Politis & Romano 1994)**: Resamples return series using pseudo-random block sizes drawn from a geometric distribution with mean block length $L=20$:
-  $$P(L=k) = (1-p)^{k-1} p, \quad p = 1/20$$
-* **Deflated Sharpe Ratio ($\text{DSR}$ - Bailey & López de Prado 2014)**: Adjusts observed Sharpe ratio $\hat{S}$ for trial variance $\sigma_S^2$ and total logged trials $N_{\text{eff}}$:
-  $$\text{DSR} = Z \left( \frac{(\hat{S} - S_0) \sqrt{T-1}}{\sqrt{1 - \gamma_3 \hat{S} + \frac{\gamma_4 - 1}{4} \hat{S}^2}} \right)$$
-  *where $\gamma_3$ is skewness, $\gamma_4$ is kurtosis, and $S_0 = \sqrt{\frac{\sigma_S^2}{2} \ln(N_{\text{eff}})}$.*
+* **Stationary Block Bootstrap (Politis & Romano 1994)**: Resamples return series using pseudo-random block sizes drawn from a geometric distribution with mean block length `L = 20`:
+
+$$P(L=k) = (1-p)^{k-1} p, \quad p = 1/20$$
+
+* **Deflated Sharpe Ratio (DSR - Bailey & López de Prado 2014)**: Adjusts observed Sharpe ratio `S_hat` for trial variance `σ_S^2` and total logged trials `N_eff`:
+
+$$\text{DSR} = Z \left( \frac{(\hat{S} - S_0) \sqrt{T-1}}{\sqrt{1 - \gamma_3 \hat{S} + \frac{\gamma_4 - 1}{4} \hat{S}^2}} \right)$$
+
+*(where γ_3 is skewness, γ_4 is kurtosis, and S_0 is the expected maximum Sharpe under null.)*
 
 ---
 
 #### 📄 `calibration.py` — Null Universe & Walk-Forward Optimizer
 * **1,000 Empirical Null Universes**: Generates synthetic phase-scrambled time series to benchmark strategies against random chance.
-* **Walk-Forward Efficiency Ratio ($\text{WFER}$)**:
-  $$\text{WFER} = \frac{\text{Sharpe}_{\text{Out-of-Sample}}}{\text{Sharpe}_{\text{In-Sample}}}$$
+* **Walk-Forward Efficiency Ratio (WFER)**:
+
+$$\text{WFER} = \frac{\text{Sharpe}_{\text{Out-of-Sample}}}{\text{Sharpe}_{\text{In-Sample}}}$$
 
 ---
 
@@ -113,21 +129,21 @@ Each quant module implements a standardized base protocol interface (`BaseStrate
 
 | Module File | Class Name | Category | Mathematical Logic / Formula |
 |---|---|---|---|
-| [sma_crossover.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/sma_crossover.py) | `SMACrossoverModule` | Trend | Long when $\text{SMA}_{\text{short}}(t) > \text{SMA}_{\text{long}}(t)$, Short/Cash otherwise. |
-| [bollinger_bands.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/bollinger_bands.py) | `BollingerBandsModule` | Mean Reversion | Bands: $\mu_N \pm k \cdot \sigma_N$. Buy when $P_t < \text{Lower}$, Sell when $P_t > \text{Upper}$. |
-| [rsi_oscillator.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/rsi_oscillator.py) | `RSIOscillatorModule` | Momentum | $\text{RSI} = 100 - \frac{100}{1 + \frac{\text{EMA}(\text{Gain}, n)}{\text{EMA}(\text{Loss}, n)}}$. Oversold $< 30$, Overbought $> 70$. |
-| [macd_momentum.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/macd_momentum.py) | `MACDMomentumModule` | Momentum | $\text{MACD} = \text{EMA}_{12} - \text{EMA}_{26}$, $\text{Signal} = \text{EMA}_9(\text{MACD})$. Long on bullish crossover. |
-| [zscore_mean_reversion.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/zscore_mean_reversion.py) | `ZScoreMeanReversionModule` | Stat Arb | $Z_t = \frac{P_t - \mu_w}{\sigma_w}$. Long when $Z_t < -2.0$, Short when $Z_t > +2.0$. |
-| [atr_sizing.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/atr_sizing.py) | `ATRSizingModule` | Volatility Sizing | $\text{Position Size} = \frac{\text{Capital} \times \text{Risk \%}}{k \cdot \text{ATR}_n(t)}$. |
-| [ichimoku.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/ichimoku.py) | `IchimokuCloudModule` | Trend | Tenkan ($\frac{H_{9}+L_{9}}{2}$), Kijun ($\frac{H_{26}+L_{26}}{2}$), Senkou Span A/B Kumo cloud boundaries. |
-| [supertrend.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/supertrend.py) | `SupertrendModule` | Trend Following | $\text{Upper/Lower} = \frac{H+L}{2} \pm \text{Multiplier} \times \text{ATR}_n$. Trailing stop trend lock. |
-| [vwap_execution.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/vwap_execution.py) | `VWAPExecutionModule` | Execution | $\text{VWAP}_t = \frac{\sum P_i V_i}{\sum V_i}$. Benchmark execution & intra-day mean reversion. |
-| [pairs_trading.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/pairs_trading.py) | `PairsTradingModule` | Cointegration | Spread $S_t = P_A - \beta P_B$. OLS cointegration $\beta$ estimation & band trading. |
-| [momentum_rotation.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/momentum_rotation.py) | `MomentumRotationModule` | Cross-Asset | Ranks universe assets by $N$-month momentum score and allocates capital to top $K$. |
+| [sma_crossover.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/sma_crossover.py) | `SMACrossoverModule` | Trend | Long when `SMA_fast(t) > SMA_slow(t)`, Short/Cash otherwise. |
+| [bollinger_bands.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/bollinger_bands.py) | `BollingerBandsModule` | Mean Reversion | Bands: `μ_N ± k · σ_N`. Buy when `P_t < Lower`, Sell when `P_t > Upper`. |
+| [rsi_oscillator.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/rsi_oscillator.py) | `RSIOscillatorModule` | Momentum | `RSI = 100 - 100 / (1 + EMA(Gain, n) / EMA(Loss, n))`. Oversold < 30, Overbought > 70. |
+| [macd_momentum.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/macd_momentum.py) | `MACDMomentumModule` | Momentum | `MACD = EMA_12 - EMA_26`, `Signal = EMA_9(MACD)`. Long on bullish crossover. |
+| [zscore_mean_reversion.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/zscore_mean_reversion.py) | `ZScoreMeanReversionModule` | Stat Arb | `Z_t = (P_t - μ_w) / σ_w`. Long when `Z_t < -2.0`, Short when `Z_t > +2.0`. |
+| [atr_sizing.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/atr_sizing.py) | `ATRSizingModule` | Volatility Sizing | `Position Size = (Capital × Risk %) / (k · ATR_n(t))`. |
+| [ichimoku.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/ichimoku.py) | `IchimokuCloudModule` | Trend | Tenkan `(H9 + L9)/2`, Kijun `(H26 + L26)/2`, Senkou Span A/B Kumo cloud boundaries. |
+| [supertrend.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/supertrend.py) | `SupertrendModule` | Trend Following | `Upper/Lower = (H+L)/2 ± Multiplier × ATR_n`. Trailing stop trend lock. |
+| [vwap_execution.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/vwap_execution.py) | `VWAPExecutionModule` | Execution | `VWAP_t = Σ(P_i · V_i) / Σ(V_i)`. Benchmark execution & intra-day mean reversion. |
+| [pairs_trading.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/pairs_trading.py) | `PairsTradingModule` | Cointegration | Spread `S_t = P_A - β · P_B`. OLS cointegration β estimation & band trading. |
+| [momentum_rotation.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/momentum_rotation.py) | `MomentumRotationModule` | Cross-Asset | Ranks universe assets by N-month momentum score and allocates capital to top K. |
 | [ml_regime.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/ml_regime.py) | `MLRegimeModule` | Machine Learning | Gaussian Hidden Markov Model (HMM) 3-state classifier (Bull, Bear, Sideways/High-Vol). |
 | [var_cvar.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/var_cvar.py) | `VaRCVaRModule` | Tail Risk | Historical & Cornish-Fisher VaR/CVaR risk engine for dynamic position deleveraging. |
-| [monte_carlo.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/monte_carlo.py) | `MonteCarloModule` | Stochastic Sim | Geometric Brownian Motion $dS_t = \mu S_t dt + \sigma S_t dW_t$ 1,000-path simulation. |
-| [portfolio_optimization.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/portfolio_optimization.py) | `PortfolioOptimizationModule` | Asset Allocation | Markowitz Mean-Variance ($\min w^T \Sigma w$), Hierarchical Risk Parity (HRP), Min-Var. |
+| [monte_carlo.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/monte_carlo.py) | `MonteCarloModule` | Stochastic Sim | Geometric Brownian Motion `dS_t = μ S_t dt + σ S_t dW_t` 1,000-path simulation. |
+| [portfolio_optimization.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/analytics/strategy_modules/portfolio_optimization.py) | `PortfolioOptimizationModule` | Asset Allocation | Markowitz Mean-Variance (`min w^T Σ w`), Hierarchical Risk Parity (HRP), Min-Var. |
 
 ---
 
@@ -144,7 +160,7 @@ Each quant module implements a standardized base protocol interface (`BaseStrate
 
 * 📄 [strategy_store.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/audit/strategy_store.py): SQLite persistence database (`strategy_history.db`) maintaining all historical run outputs, prompts, pipelines, metrics, and AI reasoning.
 * 📄 [verdict.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/audit/verdict.py): **Deterministic 2-Phase Verification Engine**:
-  * **Phase A**: Minimum Detectable Effect (MDE) Statistical Power analysis ($>50\%$), selection-aware p-value check ($p < 0.10$).
+  * **Phase A**: Minimum Detectable Effect (MDE) Statistical Power analysis (`>50%`), selection-aware p-value check (`p < 0.10`).
   * **Phase B**: Atomic Holdout evaluation. Checks whether out-of-sample Sharpe ratio degrades by more than 35% relative to in-sample performance.
 * 📄 [ledger.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/audit/ledger.py): Cryptographic SHA-256 Hash Chain ledger ensuring tamper-proof audit trails for compliance.
 
@@ -153,8 +169,10 @@ Each quant module implements a standardized base protocol interface (`BaseStrate
 ### 5. `app/quantum` — Quantum QUBO Portfolio Optimization
 
 * 📄 [qubo_formulator.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/quantum/qubo_formulator.py): Converts continuous Markowitz portfolio selection into a **Quadratic Unconstrained Binary Optimization (QUBO)** Hamiltonian for Quantum Annealers (e.g. D-Wave) and Classical Simulated Annealing:
-  $$H(x) = - \sum_{i=1}^N \mu_i x_i + \gamma \sum_{i=1}^N \sum_{j=1}^N \sigma_{ij} x_i x_j + \lambda \left( \sum_{i=1}^N x_i - K \right)^2$$
-  *where $x_i \in \{0, 1\}$ indicates inclusion of asset $i$, $\gamma$ is risk aversion factor, and $\lambda$ penalizes deviation from cardinality constraint $K$.*
+
+$$H(x) = - \sum_{i=1}^N \mu_i x_i + \gamma \sum_{i=1}^N \sum_{j=1}^N \sigma_{ij} x_i x_j + \lambda \left( \sum_{i=1}^N x_i - K \right)^2$$
+
+*(where x_i in {0, 1} indicates inclusion of asset i, γ is risk aversion factor, and λ penalizes deviation from cardinality constraint K.)*
 
 ---
 
@@ -219,15 +237,15 @@ The web application is built with **Next.js 14**, **React 18**, **TypeScript**, 
 
 | Metric / Model | Mathematical Formulation | Description |
 |---|---|---|
-| **Sharpe Ratio** | $S = \frac{\mathbb{E}[R_p - R_f]}{\sigma_p} \sqrt{252}$ | Risk-adjusted return relative to total volatility. |
-| **Sortino Ratio** | $S_d = \frac{\mathbb{E}[R_p - R_f]}{\sqrt{\frac{1}{T} \sum \min(0, R_t - R_f)^2}} \sqrt{252}$ | Risk-adjusted return relative to downside volatility. |
-| **Calmar Ratio** | $C = \frac{\text{CAGR}}{\max_{t} \text{Drawdown}(t)}$ | Ratio of annualized return to maximum historical drawdown. |
-| **Deflated Sharpe Ratio (DSR)** | $\text{DSR} = Z\left(\frac{(\hat{S} - S_0)\sqrt{T-1}}{\sqrt{1 - \gamma_3 \hat{S} + \frac{\gamma_4-1}{4}\hat{S}^2}}\right)$ | Sharpe ratio discounted for selection bias and trial variance. |
-| **Historical VaR (95%)** | $\text{VaR}_{0.95} = -\text{Percentile}(R, 5\%)$ | Maximum expected loss at 95% confidence level. |
-| **Expected Shortfall (CVaR)** | $\text{CVaR}_{\alpha} = -\mathbb{E}[R \mid R \le -\text{VaR}_{\alpha}]$ | Expected loss given that loss exceeds the VaR threshold. |
-| **HMM Market Regime** | $P(S_t = j \mid S_{t-1} = i) = A_{ij}, \quad y_t \sim \mathcal{N}(\mu_j, \Sigma_j)$ | Gaussian Hidden Markov Model for hidden market state inference. |
-| **QUBO Portfolio Hamiltonian** | $H(x) = -\mu^T x + \gamma x^T \Sigma x + \lambda (\mathbf{1}^T x - K)^2$ | Binary optimization for asset selection under risk & cardinality limits. |
-| **Stationary Block Bootstrap** | $P(L=k) = (1-p)^{k-1} p, \quad p = 1/\bar{L}$ | Resampling returns with random block sizes to retain temporal dependence. |
+| **Sharpe Ratio** | `S = (E[R_p - R_f] / σ_p) × √252` | Risk-adjusted return relative to total volatility. |
+| **Sortino Ratio** | `S_d = (E[R_p - R_f] / σ_d) × √252` | Risk-adjusted return relative to downside volatility. |
+| **Calmar Ratio** | `C = CAGR / \|Max Drawdown\|` | Ratio of annualized return to maximum historical drawdown. |
+| **Deflated Sharpe Ratio (DSR)** | `DSR = Z((S_hat - S_0)√(T-1) / √(1 - γ_3 S_hat + (γ_4-1)/4 S_hat^2))` | Sharpe ratio discounted for selection bias and trial variance. |
+| **Historical VaR (95%)** | `VaR_0.95 = - Percentile(R, 5%)` | Maximum expected loss at 95% confidence level. |
+| **Expected Shortfall (CVaR)** | `CVaR_α = - E[R \| R ≤ -VaR_α]` | Expected loss given that loss exceeds the VaR threshold. |
+| **HMM Market Regime** | `P(S_t = j \| S_{t-1} = i) = A_{ij}, y_t ~ N(μ_j, Σ_j)` | Gaussian Hidden Markov Model for hidden market state inference. |
+| **QUBO Portfolio Hamiltonian** | `H(x) = - μ^T x + γ x^T Σ x + λ (1^T x - K)^2` | Binary optimization for asset selection under risk & cardinality limits. |
+| **Stationary Block Bootstrap** | `P(L=k) = (1-p)^{k-1} p, p = 1/L_bar` | Resampling returns with random block sizes to retain temporal dependence. |
 
 ---
 
