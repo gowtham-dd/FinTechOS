@@ -4,6 +4,16 @@
 
 ---
 
+## 🌐 Live Production Deployments & Access Links
+
+| Environment | Platform | URL | Status |
+| :--- | :--- | :--- | :--- |
+| **Web Application UI** | **Vercel** | [https://fintechos.vercel.app](https://fintechos.vercel.app) | `🟢 LIVE ONLINE` |
+| **Backend REST & WS API** | **Render** | [https://fintechos.onrender.com](https://fintechos.onrender.com) | `🟢 LIVE ONLINE` |
+| **Interactive API Manual** | **FastAPI Swagger** | [https://fintechos.onrender.com/docs](https://fintechos.onrender.com/docs) | `🟢 LIVE ONLINE` |
+
+---
+
 ## 📜 Executive Summary & Product Vision
 
 **FinTech Agent OS** is a state-of-the-art quantitative finance operating system engineered to bridge the gap between high-level natural language strategy formulation, rigorous mathematical backtesting, quantum portfolio optimization, and institutional-grade overfitting auditing.

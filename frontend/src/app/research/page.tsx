@@ -1088,19 +1088,32 @@ export default function ResearchLabPage() {
 
             {/* Pydantic Spec Modal */}
             {showSpecModal && spec && (
-              <div className="fixed inset-0 z-50 bg-claude-surface/60 backdrop-blur-sm flex items-center justify-center p-4">
-                <div className="pro-card max-w-xl w-full p-6 space-y-4 shadow-xl">
-                  <div className="flex items-center justify-between border-b border-claude-amber/20 pb-3">
+              <div 
+                className="fixed inset-0 z-50 bg-claude-surface/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all"
+                onClick={() => setShowSpecModal(false)}
+              >
+                <div 
+                  className="pro-card max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col bg-white border border-claude-amber/30 rounded-2xl animate-in fade-in zoom-in-95 duration-150"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between border-b border-claude-amber/20 pb-3 shrink-0">
                     <h3 className="font-bold text-lg text-claude-surface flex items-center gap-2">
                       <CheckCircle className="w-5 h-5 text-emerald-600" />
                       Confirm Parsed Pydantic Strategy Spec
                     </h3>
-                    <button onClick={() => setShowSpecModal(false)} className="text-claude-surface/50 hover:text-claude-surface text-xl font-bold">×</button>
+                    <button 
+                      onClick={() => setShowSpecModal(false)} 
+                      className="text-claude-surface/50 hover:text-claude-surface p-1 rounded-lg hover:bg-claude-cream transition-colors text-xl font-bold leading-none"
+                    >
+                      ×
+                    </button>
                   </div>
-                  <div className="bg-claude-cream p-4 rounded-xl border border-claude-amber/20 font-mono text-xs overflow-x-auto">
-                    <pre>{JSON.stringify(spec, null, 2)}</pre>
+
+                  <div className="bg-claude-cream p-4 rounded-xl border border-claude-amber/20 font-mono text-xs overflow-y-auto overflow-x-auto max-h-[50vh] shrink">
+                    <pre className="whitespace-pre-wrap break-words">{JSON.stringify(spec, null, 2)}</pre>
                   </div>
-                  <div className="flex items-center justify-end gap-3 pt-2">
+
+                  <div className="flex items-center justify-end gap-3 pt-2 shrink-0 border-t border-claude-amber/10">
                     <button onClick={() => setShowSpecModal(false)} className="pro-btn-secondary">Cancel</button>
                     <button onClick={() => executeRun(spec)} className="pro-btn-primary">Confirm & Execute Node Pipeline</button>
                   </div>
