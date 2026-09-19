@@ -17,7 +17,7 @@ export const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-claude-amber/20 shadow-sm px-4 md:px-8 py-3">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-claude-amber/20 shadow-sm px-4 md:px-8 py-3 relative">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
@@ -61,7 +61,7 @@ export const Navbar: React.FC = () => {
           })}
         </nav>
 
-        {/* Status Pill */}
+        {/* Status Pill & Actions */}
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
