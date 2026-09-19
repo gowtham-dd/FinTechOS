@@ -104,11 +104,21 @@ class DualMemoryStore:
                 print(f"MemoryStore Mongo Get Warning: {e}")
 
         # SQLite fallback
-        async with aiosqlite.connect(self.sqlite_db_path) as db:
-            async with db.execute("SELECT value FROM memory_store WHERE key = ?", (key,)) as cursor:
-                row = await cursor.fetchone()
-                if row:
-                    return json.loads(row[0])
+        try:
+            db_dir = os.path.dirname(self.sqlite_db_path)
+            if db_dir:
+                os.makedirs(db_dir, exist_ok=True)
+            async with aiosqlite.connect(self.sqlite_db_path) as db:
+                await db.execute(
+                    "CREATE TABLE IF NOT EXISTS memory_store (key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+                )
+                async with db.execute("SELECT value FROM memory_store WHERE key = ?", (key,)) as cursor:
+                    row = await cursor.fetchone()
+                    if row:
+                        return json.loads(row[0])
+        except Exception as sqlite_err:
+            print(f"MemoryStore SQLite Get Warning: {sqlite_err}")
         return None
+
 
 memory_store = DualMemoryStore()
