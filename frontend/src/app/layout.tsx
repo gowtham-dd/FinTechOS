@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AIAssistantWidget } from "@/components/layout/AIAssistantWidget";
+import { BloombergTerminalWidget } from "@/components/layout/BloombergTerminalWidget";
 
 export const metadata: Metadata = {
-  title: "Quantum FinTech AgentOS — AI Agent Factory & Quantum Optimization Engine",
-  description: "A platform that converts financial objectives into executable AI agents, evaluates them on Bitcoin transaction networks, and optimizes decisions via Quantum QUBO Annealing.",
+  title: "FinTech Agent OS — Quantitative Financial Intelligence & Overfitting Audit Engine",
+  description: "Institutional AI Agent platform for quantitative backtesting, overfitting audit ledgers, quantum QUBO optimization, and AML graph networks.",
 };
 
 export default function RootLayout({
@@ -13,8 +15,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-claude-cream text-claude-surface font-sans antialiased" suppressHydrationWarning>
-        {children}
+      <body className="bg-claude-cream text-claude-surface font-sans antialiased min-h-screen" suppressHydrationWarning>
+        <div className="pb-12 min-h-screen flex flex-col">
+          {children}
+        </div>
+        <BloombergTerminalWidget />
+        <AIAssistantWidget />
       </body>
     </html>
   );
