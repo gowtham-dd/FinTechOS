@@ -1,14 +1,21 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
-import { runExperiment, revealHoldout, ExperimentSpec, RunResponse } from "@/lib/api";
-import { Sliders, Lock, Unlock, AlertTriangle, Layers, DollarSign, CheckCircle } from "lucide-react";
+import { runExperiment, revealHoldout, runMLRegimeDetection, ExperimentSpec, RunResponse } from "@/lib/api";
+import { Sliders, Lock, Unlock, AlertTriangle, Layers, DollarSign, CheckCircle, Cpu, RefreshCw, Play } from "lucide-react";
+import { LineChart as ReLineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function RobustnessPage() {
   const [data, setData] = useState<RunResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [revealing, setRevealing] = useState(false);
   const [holdoutResult, setHoldoutResult] = useState<any>(null);
+
+  // ML Regimes state
+  const [regimeAsset, setRegimeAsset] = useState("NVDA");
+  const [regimeAlgo, setRegimeAlgo] = useState("HMM");
+  const [regimeLoading, setRegimeLoading] = useState(false);
+  const [regimeData, setRegimeData] = useState<any>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -27,6 +34,7 @@ export default function RobustnessPage() {
       };
       const res = await runExperiment(spec);
       setData(res);
+      handleRunMLRegimes();
     } catch (e) {
       console.error(e);
     } finally {
@@ -37,6 +45,18 @@ export default function RobustnessPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleRunMLRegimes = async () => {
+    setRegimeLoading(true);
+    try {
+      const res = await runMLRegimeDetection(regimeAsset, 3, regimeAlgo);
+      setRegimeData(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRegimeLoading(false);
+    }
+  };
 
   const handleReveal = async () => {
     if (!data) return;
@@ -66,15 +86,91 @@ export default function RobustnessPage() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold tracking-wide mb-2">
               <Sliders className="w-3.5 h-3.5" />
-              <span>SCREEN 3: ROBUSTNESS & REGIMES</span>
+              <span>SCREEN 3: ROBUSTNESS & ML MARKET REGIMES</span>
             </div>
             <h1 className="text-3xl font-extrabold text-claude-surface tracking-tight">
-              Plateau Stability & Atomic Holdout Chamber
+              Robustness & ML Market Regimes Chamber
             </h1>
             <p className="text-sm text-claude-surface/70 mt-1">
-              Evaluate parameter grid surfaces, commission fee sensitivity, 2x2 market regimes, and trigger holdout reveals.
+              Evaluate parameter grid surfaces, commission fee sensitivity, unsupervised ML market regime detection (HMM / K-Means), and trigger holdout reveals.
             </p>
           </div>
+        </div>
+
+        {/* ML Unsupervised Market Regime Classifier */}
+        <div className="pro-card p-6 border-l-4 border-l-claude-orange">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h3 className="font-bold text-base text-claude-surface flex items-center gap-2">
+                <Cpu className="w-5 h-5 text-claude-orange" />
+                ML Unsupervised Market Regime Detection (HMM / K-Means)
+              </h3>
+              <p className="text-xs text-claude-surface/70 mt-1">
+                Discovers market regimes automatically using Hidden Markov Model (HMM) or K-Means clustering on daily returns & 20-day volatility.
+              </p>
+            </div>
+            <button onClick={handleRunMLRegimes} disabled={regimeLoading} className="pro-btn-primary">
+              {regimeLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              <span>Fit ML Model</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-claude-cream/60 p-4 rounded-xl border border-claude-amber/20 mb-6">
+            <div>
+              <label className="text-xs font-bold text-claude-surface/70">Asset</label>
+              <select value={regimeAsset} onChange={(e) => setRegimeAsset(e.target.value)} className="pro-input mt-1">
+                <option value="NVDA">NVIDIA (NVDA)</option>
+                <option value="BTC-USD">Bitcoin (BTC-USD)</option>
+                <option value="GC=F">Gold (GC=F)</option>
+                <option value="SPY">S&P 500 (SPY)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-claude-surface/70">Clustering Algorithm</label>
+              <select value={regimeAlgo} onChange={(e) => setRegimeAlgo(e.target.value)} className="pro-input mt-1">
+                <option value="HMM">Hidden Markov Model (HMM)</option>
+                <option value="KMeans">K-Means Clustering</option>
+              </select>
+            </div>
+          </div>
+
+          {regimeData && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {regimeData.regimes?.map((r: any, idx: number) => (
+                  <div key={idx} className="p-4 rounded-xl bg-white border border-claude-amber/20 shadow-sm border-l-4 border-l-claude-orange">
+                    <div className="text-[10px] font-bold text-claude-surface/60 uppercase">Regime #{r.regime_id + 1}</div>
+                    <h4 className="font-extrabold text-sm text-claude-surface mt-1">{r.label}</h4>
+                    <div className="mt-2 space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-claude-surface/70">Ann. Return:</span>
+                        <span className="font-bold">{(r.annualized_return * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-claude-surface/70">Ann. Volatility:</span>
+                        <span className="font-bold">{(r.annualized_volatility * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-claude-surface/70">Sample Share:</span>
+                        <span className="font-bold text-claude-orange">{(r.sample_pct * 100).toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ReLineChart data={regimeData.timeline || []}>
+                    <XAxis dataKey="date" stroke="#1E1915" opacity={0.4} fontSize={11} />
+                    <YAxis stroke="#1E1915" opacity={0.4} fontSize={11} domain={["auto", "auto"]} />
+                    <Tooltip contentStyle={{ backgroundColor: "#FFFFFF", border: "1px solid #D97706", borderRadius: "12px", fontSize: "12px" }} />
+                    <Line type="monotone" dataKey="close" name="Asset Close ($)" stroke="#EA580C" strokeWidth={2} dot={false} />
+                  </ReLineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
         </div>
 
         {data && (
@@ -142,7 +238,7 @@ export default function RobustnessPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-base text-claude-surface flex items-center gap-2">
                     <Layers className="w-5 h-5 text-claude-orange" />
-                    2x2 Market Regimes Matrix
+                    2x2 Rule-Based Market Regimes Matrix
                   </h3>
                 </div>
                 <div className="grid grid-cols-2 gap-3">

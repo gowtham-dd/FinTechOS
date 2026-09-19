@@ -1,7 +1,8 @@
 import json
+import os
 import time
 from typing import List, Dict, Any, Optional
-from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from app.config import settings
 from app.models.artifacts import AgentMetadata, WorkflowStep, WorkflowExecutionState, ConstraintSpec
@@ -134,64 +135,61 @@ AGENT_REGISTRY: Dict[str, AgentMetadata] = {
 
 class AgentOSFactory:
     """
-    Agent Factory Orchestrator powered by Groq LLM + LangGraph DAG execution engine.
+    Agent Factory Orchestrator powered by Featherless LLM + LangGraph DAG execution engine.
+    Utilizes Featherless API (OpenAI compatible endpoint https://api.featherless.ai/v1)
+    NO FALLBACKS: Raises explicit error if FEATHERLESS_API_KEY is missing or failing.
     """
     def __init__(self):
-        self.llm = None
-        if settings.GROQ_API_KEY:
-            try:
-                self.llm = ChatGroq(
-                    groq_api_key=settings.GROQ_API_KEY,
-                    model_name=settings.DEFAULT_LLM_MODEL,
-                    temperature=0.2
-                )
-            except Exception as e:
-                print(f"AgentOSFactory: Groq LLM init warning: {e}")
+        self.api_key = os.getenv("FEATHERLESS_API_KEY", settings.FEATHERLESS_API_KEY).strip()
+        self.base_url = os.getenv("FEATHERLESS_BASE_URL", settings.FEATHERLESS_BASE_URL).strip()
+        self.model = os.getenv("FEATHERLESS_MODEL", settings.FEATHERLESS_MODEL).strip()
+        self.llm = self._init_featherless_llm()
+
+    def _init_featherless_llm(self):
+        if not self.api_key or "your_featherless_api_key" in self.api_key:
+            return None
+        try:
+            return ChatOpenAI(
+                base_url=self.base_url,
+                api_key=self.api_key,
+                model=self.model,
+                temperature=0.2
+            )
+        except Exception as e:
+            print(f"AgentOSFactory: Featherless LLM init error: {e}")
+            return None
 
     def get_all_agents(self) -> List[AgentMetadata]:
         return list(AGENT_REGISTRY.values())
 
     async def generate_workflow_dag(self, goal: str) -> List[str]:
         """
-        Parses user financial objective and returns recommended DAG list of Agent IDs.
+        Parses user financial objective and returns recommended DAG list of Agent IDs via Featherless LLM.
+        NO FALLBACKS: Raises explicit error if FEATHERLESS_API_KEY is missing or failing.
         """
-        default_dag = [
-            "data_ingestion",
-            "data_quality",
-            "transaction_risk",
-            "graph_intelligence",
-            "network_risk",
-            "financial_impact",
-            "investigation_candidate",
-            "constraint_spec",
-            "classical_opt",
-            "quantum_opt",
-            "evaluation",
-            "reward",
-            "explanation"
-        ]
-
+        if not self.api_key or "your_featherless_api_key" in self.api_key:
+            raise ValueError(
+                "FEATHERLESS_API_KEY is not configured in environment. "
+                "Please add a valid FEATHERLESS_API_KEY in backend/.env file to generate workflow DAG."
+            )
         if not self.llm:
-            return default_dag
+            raise ValueError("Featherless LLM client could not be initialized. Please verify FEATHERLESS_API_KEY.")
 
-        try:
-            sys_prompt = "You are AgentOS Architect. Return ONLY a JSON list of agent_ids from this available list: " + ", ".join(AGENT_REGISTRY.keys())
-            usr_prompt = f"Goal: {goal}\nSelect ordered agent IDs to execute."
-            
-            response = self.llm.invoke([
-                SystemMessage(content=sys_prompt),
-                HumanMessage(content=usr_prompt)
-            ])
-            text = response.content.strip()
-            if text.startswith("[") and text.endswith("]"):
-                dag = json.loads(text)
-                valid_dag = [a for a in dag if a in AGENT_REGISTRY]
-                if len(valid_dag) >= 4:
-                    return valid_dag
-        except Exception as e:
-            print(f"Groq workflow generation fallback: {e}")
-            
-        return default_dag
+        sys_prompt = "You are AgentOS Architect. Return ONLY a JSON list of agent_ids from this available list: " + ", ".join(AGENT_REGISTRY.keys())
+        usr_prompt = f"Goal: {goal}\nSelect ordered agent IDs to execute."
+        
+        response = self.llm.invoke([
+            SystemMessage(content=sys_prompt),
+            HumanMessage(content=usr_prompt)
+        ])
+        text = str(response.content).strip()
+        if text.startswith("[") and text.endswith("]"):
+            dag = json.loads(text)
+            valid_dag = [a for a in dag if a in AGENT_REGISTRY]
+            if len(valid_dag) >= 4:
+                return valid_dag
+
+        raise ValueError(f"Featherless LLM workflow generation returned non-JSON structure: {text}")
 
     async def execute_agent_workflow(self, goal: str, max_investigations: int = 50) -> WorkflowExecutionState:
         """
