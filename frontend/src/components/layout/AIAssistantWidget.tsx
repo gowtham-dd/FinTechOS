@@ -73,13 +73,25 @@ export function AIAssistantWidget() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${apiBase}/api/v1/assistant/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, session_id: "demo_session" })
-      });
+      let res: Response | null = null;
+      try {
+        res = await fetch(`${apiBase}/api/v1/assistant/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, session_id: "demo_session" })
+        });
+      } catch (firstErr) {
+        // Cold start retry attempt after 2 seconds
+        console.warn("[AIAssistantWidget] Retrying backend connection (Render cold start)...");
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        res = await fetch(`${apiBase}/api/v1/assistant/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, session_id: "demo_session" })
+        });
+      }
 
-      if (res.ok) {
+      if (res && res.ok) {
         const data = await res.json();
         const botMsg: ChatMessage = {
           id: `bot-${Date.now()}`,
@@ -93,20 +105,21 @@ export function AIAssistantWidget() {
         };
         setMessages((prev) => [...prev, botMsg]);
       } else {
-        throw new Error(`HTTP ${res.status}`);
+        throw new Error(`HTTP ${res?.status || 500}`);
       }
     } catch (e: any) {
       console.error("Assistant chat error:", e);
       const errBotMsg: ChatMessage = {
         id: `err-${Date.now()}`,
         role: "assistant",
-        content: `⚠️ **Backend Connection Error**: Unable to reach FastAPI backend server at \`${apiBase}\`. Ensure your backend server is running (\`uv run uvicorn app.main:app --reload --port 8000\`).`,
+        content: `⚠️ **Backend Connecting...**: Render free tier is waking up backend server at \`${apiBase}\`. Please try clicking your query again in 10 seconds!`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages((prev) => [...prev, errBotMsg]);
     } finally {
       setLoading(false);
     }
+
   };
 
   const handleClearHistory = async () => {

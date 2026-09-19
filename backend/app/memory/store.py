@@ -61,12 +61,22 @@ class DualMemoryStore:
                 print(f"MemoryStore Mongo Set Warning: {e}")
 
         # SQLite fallback
-        async with aiosqlite.connect(self.sqlite_db_path) as db:
-            await db.execute(
-                "INSERT OR REPLACE INTO memory_store (key, value) VALUES (?, ?)",
-                (key, json_val)
-            )
-            await db.commit()
+        try:
+            db_dir = os.path.dirname(self.sqlite_db_path)
+            if db_dir:
+                os.makedirs(db_dir, exist_ok=True)
+            async with aiosqlite.connect(self.sqlite_db_path) as db:
+                await db.execute(
+                    "CREATE TABLE IF NOT EXISTS memory_store (key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+                )
+                await db.execute(
+                    "INSERT OR REPLACE INTO memory_store (key, value) VALUES (?, ?)",
+                    (key, json_val)
+                )
+                await db.commit()
+        except Exception as sqlite_err:
+            print(f"MemoryStore SQLite Set Warning: {sqlite_err}")
+
 
     async def get(self, key: str) -> Optional[Dict[str, Any]]:
         if self.use_redis and self.redis_client:

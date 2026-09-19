@@ -137,7 +137,10 @@ Your sole job is to guide the user on how to use FinTech Agent OS, explain platf
         # Step 6: Update Memory & SimHash Cache
         history.append({"role": "user", "content": anonymized_query})
         history.append({"role": "assistant", "content": llm_response})
-        await self.save_session_history(session_id, history)
+        try:
+            await self.save_session_history(session_id, history)
+        except Exception as e:
+            print(f"[Assistant] Warning: Failed to save session history: {e}")
 
         response_payload = {
             "response": llm_response,
@@ -149,9 +152,13 @@ Your sole job is to guide the user on how to use FinTech Agent OS, explain platf
         }
 
         # Cache response for future similar queries
-        await simhash_cache.store(anonymized_query, response_payload)
+        try:
+            await simhash_cache.store(anonymized_query, response_payload)
+        except Exception as e:
+            print(f"[Assistant] Warning: Failed to store simhash cache: {e}")
 
         return response_payload
+
 
     async def _call_featherless_llm(self, system_prompt: str, user_query: str) -> str:
         """Submits prompt to Featherless LLM endpoint or uses system fallback generator."""
