@@ -95,13 +95,14 @@ class MLRegimeModule(BaseStrategyModule):
             mask = (regime_labels == r)
             n_samples = np.sum(mask)
             if n_samples > 0:
-                daily_mean = float(np.mean(ret[mask]))
-                # Annualized mean return clipped to realistic bounds [-100%, +200%]
-                mean_ret = float(np.clip(daily_mean * 252, -1.0, 2.0))
+                log_rets = np.log1p(np.clip(ret[mask], -0.2, 0.2))
+                mean_log = float(np.mean(log_rets))
+                mean_ret = float(np.clip(np.expm1(mean_log * 252), -0.85, 1.85))
                 ann_vol = float(np.std(ret[mask]) * np.sqrt(252))
             else:
                 mean_ret = 0.0
                 ann_vol = 0.0
+
 
             # Transition self-loop probability P(S_t = r | S_{t-1} = r)
             self_loop_prob = float(transition_matrix[r, r]) if r < transition_matrix.shape[0] else 0.8
