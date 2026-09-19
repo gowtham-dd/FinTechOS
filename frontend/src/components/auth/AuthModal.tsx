@@ -98,7 +98,7 @@ export function AuthModal({ isOpen, onClose, user, onAuthSuccess, onLogout }: Au
       const data = await res.json();
       if (res.ok && data.access_token) {
         onAuthSuccess(data.access_token, data.user);
-        showToast("Logged in with Sample Quant Researcher Account!");
+        showToast("Logged in as Gowtham!");
         setTimeout(() => onClose(), 800);
       } else {
         setErrorMsg("Failed to connect demo account.");
@@ -238,7 +238,7 @@ export function AuthModal({ isOpen, onClose, user, onAuthSuccess, onLogout }: Au
                     <Zap className="w-3.5 h-3.5 fill-current" />
                   </div>
                   <span className="group-hover:translate-x-0.5 transition-transform">
-                    {demoLoading ? "Connecting Sample Account..." : "1-Click Sample Quant Account"}
+                    {demoLoading ? "Connecting Gowtham's Account..." : "1-Click Gowtham's Account"}
                   </span>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-900 font-mono uppercase font-black">

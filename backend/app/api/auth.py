@@ -113,18 +113,18 @@ async def login(req: LoginRequest):
 @router.post("/auth/demo", response_model=AuthTokenResponse)
 async def login_demo():
     """1-Click Sample Quant Account Access for testing & evaluation."""
-    demo_email = "demo.researcher@fintech-os.io"
-    demo_name = "Senior Quant Researcher"
+    demo_email = "gowtham@fintech-os.io"
+    demo_name = "Gowtham"
     coll = mongo_db.get_collection("users")
     
-    user_id = "usr_demo_quant_master"
+    user_id = "usr_gowtham_quant_master"
     if coll is not None:
         user = coll.find_one({"email": demo_email})
         if not user:
             user_doc = {
                 "user_id": user_id,
                 "email": demo_email,
-                "password_hash": hash_password("demo123456"),
+                "password_hash": hash_password("gowtham123"),
                 "full_name": demo_name,
                 "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
             }
