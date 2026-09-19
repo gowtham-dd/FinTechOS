@@ -144,6 +144,15 @@ class DataProvider:
         self.live_provider = LiveYFinanceProvider()
         self._cache_dict: Dict[str, pd.DataFrame] = {}
 
+    def fetch_ohlcv(self, ticker: str = "GC=F", dev_end_date: str = "2023-12-31") -> pd.DataFrame:
+        """Fetches OHLCV dataframe for ticker, bounded by dev_end_date."""
+        df = self.get_asset_dataframe(ticker)
+        if dev_end_date:
+            df = df[df["date"] <= pd.to_datetime(dev_end_date)].copy()
+        if df.empty:
+            df = self.live_provider._fallback_synthetic(ticker)
+        return df
+
     def get_asset_dataframe(self, asset: str = "BTC-USD") -> pd.DataFrame:
         if asset not in self._cache_dict:
             self._cache_dict[asset] = self.live_provider.fetch_asset_data(asset)

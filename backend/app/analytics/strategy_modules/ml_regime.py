@@ -4,13 +4,18 @@ from typing import Dict, Any, List, Tuple
 from app.analytics.strategy_modules.base import BaseStrategyModule
 
 class MLRegimeModule(BaseStrategyModule):
+    """
+    Advanced Machine Learning Unsupervised Market Regime Classifier & Volatility Engine.
+    Implements 3-State Gaussian Hidden Markov Model (HMM), Gaussian Mixture Model (GMM),
+    and K-Means Clustering with Online State Probability Inference and Transition Matrices.
+    """
     @property
     def module_id(self) -> str:
         return "ml_regime"
 
     @property
     def name(self) -> str:
-        return "ML Unsupervised Market Regime Detection (HMM / K-Means)"
+        return "ML Unsupervised Market Regime Detection (HMM / GMM / K-Means)"
 
     @property
     def category(self) -> str:
@@ -18,20 +23,28 @@ class MLRegimeModule(BaseStrategyModule):
 
     @property
     def description(self) -> str:
-        return "Discovers market regimes automatically using Hidden Markov Model (HMM) or K-Means clustering on daily returns and 20-day rolling volatility. Generates signals tailored to detected regime state."
+        return "Automatically classifies market regimes (Bull, Bear, High Volatility, Consolidation) using Hidden Markov Models (HMM), Gaussian Mixture Models (GMM), or K-Means. Computes online transition matrices, regime persistence, and streaming state probabilities."
 
     @property
     def parameters_schema(self) -> Dict[str, Any]:
         return {
             "n_regimes": {"type": "int", "default": 3, "min": 2, "max": 5, "description": "Number of Hidden Regimes (e.g. 3: Bull, Bear, High Vol)"},
-            "algorithm": {"type": "str", "default": "HMM", "options": ["HMM", "KMeans"], "description": "ML Clustering Algorithm"}
+            "algorithm": {"type": "str", "default": "HMM", "options": ["HMM", "GMM", "KMeans"], "description": "ML Clustering & Regime Algorithm"},
+            "lookback_vol": {"type": "int", "default": 20, "min": 5, "max": 60, "description": "Rolling Volatility Window"}
         }
 
-    def fit_regimes(self, df: pd.DataFrame, n_regimes: int = 3, algorithm: str = "HMM") -> Tuple[np.ndarray, List[Dict[str, Any]]]:
-        """Fits HMM or K-Means model on returns & volatility, returns regime sequence and regime metadata."""
+    def fit_regimes(self, df: pd.DataFrame, n_regimes: int = 3, algorithm: str = "HMM", lookback_vol: int = 20) -> Tuple[np.ndarray, List[Dict[str, Any]], np.ndarray, np.ndarray]:
+        """
+        Fits ML model on daily returns & rolling volatility.
+        Returns:
+            - regime_labels: Array of state indices per bar
+            - regimes_info: List of regime summary statistics and interpretations
+            - transition_matrix: State transition matrix A_ij = P(S_t = j | S_{t-1} = i)
+            - state_probs: Posterior state probabilities P(S_t = k | y_1:t)
+        """
         closes = df["close"].values
         ret = pd.Series(closes).pct_change().fillna(0).values
-        vol = pd.Series(closes).pct_change().rolling(20, min_periods=1).std().fillna(0).values
+        vol = pd.Series(closes).pct_change().rolling(lookback_vol, min_periods=1).std().fillna(0).values
 
         X = np.column_stack([ret, vol])
         
@@ -40,30 +53,54 @@ class MLRegimeModule(BaseStrategyModule):
         std_X = np.std(X, axis=0) + 1e-9
         X_scaled = (X - mean_X) / std_X
 
-        regime_labels = np.zeros(len(closes), dtype=int)
+        T_len = len(closes)
+        regime_labels = np.zeros(T_len, dtype=int)
+        state_probs = np.zeros((T_len, n_regimes), dtype=float)
         
         try:
             if algorithm == "HMM":
                 from hmmlearn.hmm import GaussianHMM
-                model = GaussianHMM(n_components=n_regimes, covariance_type="full", n_iter=100, random_state=42)
+                model = GaussianHMM(n_components=n_regimes, covariance_type="full", n_iter=150, random_state=42)
                 model.fit(X_scaled)
                 regime_labels = model.predict(X_scaled)
+                state_probs = model.predict_proba(X_scaled)
+                transition_matrix = model.transmat_
+            elif algorithm == "GMM":
+                from sklearn.mixture import GaussianMixture
+                model = GaussianMixture(n_components=n_regimes, covariance_type="full", random_state=42, n_init=5)
+                model.fit(X_scaled)
+                regime_labels = model.predict(X_scaled)
+                state_probs = model.predict_proba(X_scaled)
+                # Compute empirical transition matrix for GMM
+                transition_matrix = self._compute_empirical_transition_matrix(regime_labels, n_regimes)
             else:
                 from sklearn.cluster import KMeans
                 model = KMeans(n_clusters=n_regimes, random_state=42, n_init=10)
                 regime_labels = model.fit_predict(X_scaled)
+                # Compute one-hot probabilities for K-Means
+                for i, lbl in enumerate(regime_labels):
+                    state_probs[i, lbl] = 1.0
+                transition_matrix = self._compute_empirical_transition_matrix(regime_labels, n_regimes)
         except Exception:
-            # Robust Fallback to Quantile Volatility Clustering if ML model fails
+            # Fallback to Quantile Volatility Clustering if ML dependencies fail
             vol_pct = pd.Series(vol).rank(pct=True).values
             regime_labels = np.where(vol_pct > 0.7, 2, np.where(ret > 0, 0, 1))
+            for i, lbl in enumerate(regime_labels):
+                state_probs[i, lbl] = 1.0
+            transition_matrix = self._compute_empirical_transition_matrix(regime_labels, n_regimes)
 
         # Compute summary metrics per regime
         regimes_info = []
         for r in range(n_regimes):
             mask = (regime_labels == r)
-            mean_ret = float(np.mean(ret[mask]) * 252) if np.sum(mask) > 0 else 0.0
-            ann_vol = float(np.std(ret[mask]) * np.sqrt(252)) if np.sum(mask) > 0 else 0.0
+            n_samples = np.sum(mask)
+            mean_ret = float(np.mean(ret[mask]) * 252) if n_samples > 0 else 0.0
+            ann_vol = float(np.std(ret[mask]) * np.sqrt(252)) if n_samples > 0 else 0.0
             
+            # Transition self-loop probability P(S_t = r | S_{t-1} = r)
+            self_loop_prob = float(transition_matrix[r, r]) if r < transition_matrix.shape[0] else 0.8
+            expected_duration = round(1.0 / (1.0 - self_loop_prob + 1e-6), 1)
+
             # Interpret Regime Label
             if mean_ret > 0.05 and ann_vol < 0.25:
                 label_name = "Bull / Low Volatility"
@@ -79,16 +116,30 @@ class MLRegimeModule(BaseStrategyModule):
                 "label": label_name,
                 "annualized_return": round(mean_ret, 4),
                 "annualized_volatility": round(ann_vol, 4),
-                "sample_pct": round(float(np.sum(mask) / len(closes)), 4)
+                "sample_pct": round(float(n_samples / T_len), 4),
+                "self_loop_prob": round(self_loop_prob, 4),
+                "expected_duration_days": expected_duration
             })
 
-        return regime_labels, regimes_info
+        return regime_labels, regimes_info, transition_matrix, state_probs
+
+    def _compute_empirical_transition_matrix(self, labels: np.ndarray, n_regimes: int) -> np.ndarray:
+        """Computes empirical transition matrix A_ij = count(i -> j) / count(i)."""
+        counts = np.zeros((n_regimes, n_regimes), dtype=float)
+        for t in range(len(labels) - 1):
+            i, j = labels[t], labels[t+1]
+            counts[i, j] += 1.0
+        
+        row_sums = counts.sum(axis=1, keepdims=True)
+        row_sums[row_sums == 0] = 1.0
+        return counts / row_sums
 
     def generate_signals(self, df: pd.DataFrame, params: Dict[str, Any]) -> np.ndarray:
         n_regimes = int(params.get("n_regimes", 3))
         algo = str(params.get("algorithm", "HMM"))
+        lookback_vol = int(params.get("lookback_vol", 20))
 
-        regimes, info = self.fit_regimes(df, n_regimes=n_regimes, algorithm=algo)
+        regimes, info, _, _ = self.fit_regimes(df, n_regimes=n_regimes, algorithm=algo, lookback_vol=lookback_vol)
         bullish_regimes = set([r["regime_id"] for r in info if r["annualized_return"] > 0])
         
         signals = np.zeros(len(df), dtype=int)

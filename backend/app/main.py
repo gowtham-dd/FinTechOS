@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api import agents, dataset, optimization, deployment, quant_router
+from app.api import agents, dataset, optimization, deployment, quant_router, assistant_router, terminal_router
 from app.memory.store import memory_store
 
 app = FastAPI(
@@ -32,6 +32,8 @@ async def root():
     }
 
 app.include_router(quant_router.router, prefix=settings.API_V1_STR)
+app.include_router(assistant_router.router, prefix=settings.API_V1_STR)
+app.include_router(terminal_router.router, prefix=settings.API_V1_STR)
 app.include_router(agents.router, prefix=settings.API_V1_STR)
 app.include_router(dataset.router, prefix=settings.API_V1_STR)
 app.include_router(optimization.router, prefix=settings.API_V1_STR)
