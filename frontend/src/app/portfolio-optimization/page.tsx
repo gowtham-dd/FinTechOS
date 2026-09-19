@@ -404,8 +404,8 @@ export default function PortfolioOptimizationPage() {
 
       {/* Save Notification Toast */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-stone-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-stone-700 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+        <div className="fixed top-20 right-6 z-50 bg-white text-amber-950 px-4 py-3 rounded-2xl shadow-xl border border-amber-300 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-200">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
           <span className="text-xs font-semibold">{toastMessage}</span>
         </div>
       )}
@@ -450,7 +450,7 @@ export default function PortfolioOptimizationPage() {
             <button
               onClick={runOptimization}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
               <span>Recompute 10k Sims</span>
@@ -933,35 +933,35 @@ export default function PortfolioOptimizationPage() {
 
             {/* Hover Tooltip Card */}
             {hoveredPoint && (
-              <div className="absolute top-2 right-2 bg-stone-900/95 backdrop-blur-md text-white p-3 rounded-xl shadow-lg text-xs font-mono border border-stone-700 pointer-events-none z-10 w-56">
-                <div className="flex items-center justify-between pb-1 mb-1.5 border-b border-stone-800">
-                  <span className="font-bold text-claude-orange">Portfolio Details</span>
-                  <span className="text-[10px] text-gray-400">
+              <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-md text-[#1E1915] p-3 rounded-2xl shadow-xl text-xs font-mono border border-amber-200/90 pointer-events-none z-10 w-56">
+                <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-amber-100">
+                  <span className="font-bold text-amber-900 font-sans">Portfolio Details</span>
+                  <span className="text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded font-bold border border-amber-200 font-mono">
                     Sharpe: {hoveredPoint.sharpe != null ? hoveredPoint.sharpe.toFixed(2) : "0.00"}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-1 text-[11px] mb-2">
-                  <span className="text-gray-400">Return:</span>
-                  <span className="text-right font-bold">
+                <div className="grid grid-cols-2 gap-1 text-[11px] mb-2 font-sans">
+                  <span className="text-stone-500">Return:</span>
+                  <span className="text-right font-bold text-emerald-700">
                     +{hoveredPoint.return != null ? (hoveredPoint.return * 100).toFixed(1) : "0.0"}%
                   </span>
-                  <span className="text-gray-400">Volatility:</span>
-                  <span className="text-right font-bold">
+                  <span className="text-stone-500">Volatility:</span>
+                  <span className="text-right font-bold text-amber-800">
                     {hoveredPoint.volatility != null ? (hoveredPoint.volatility * 100).toFixed(1) : "0.0"}%
                   </span>
                 </div>
-                <div className="pt-1 border-t border-stone-800 text-[10.5px] space-y-0.5">
+                <div className="pt-1.5 border-t border-amber-100 text-[10.5px] space-y-0.5 font-sans">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Gold:</span>
-                    <span>{((hoveredPoint.weights?.["GC=F"] ?? 0) * 100).toFixed(1)}%</span>
+                    <span className="text-stone-500">Gold (GC=F):</span>
+                    <span className="font-bold text-amber-950">{((hoveredPoint.weights?.["GC=F"] ?? 0) * 100).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">BTC:</span>
-                    <span>{((hoveredPoint.weights?.["BTC-USD"] ?? 0) * 100).toFixed(1)}%</span>
+                    <span className="text-stone-500">Bitcoin (BTC):</span>
+                    <span className="font-bold text-amber-950">{((hoveredPoint.weights?.["BTC-USD"] ?? 0) * 100).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">NVDA:</span>
-                    <span>{((hoveredPoint.weights?.["NVDA"] ?? 0) * 100).toFixed(1)}%</span>
+                    <span className="text-stone-500">NVIDIA (NVDA):</span>
+                    <span className="font-bold text-amber-950">{((hoveredPoint.weights?.["NVDA"] ?? 0) * 100).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>
@@ -1028,8 +1028,8 @@ export default function PortfolioOptimizationPage() {
                       onClick={() => setCapital(val)}
                       className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold transition-all ${
                         capital === val
-                          ? "bg-stone-900 text-white"
-                          : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                          ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xs"
+                          : "bg-amber-100/60 text-amber-900 hover:bg-amber-100 border border-amber-200/60"
                       }`}
                     >
                       ${val >= 1000000 ? "1M" : `${val / 1000}k`}
@@ -1150,7 +1150,7 @@ export default function PortfolioOptimizationPage() {
               <span className="text-[11px] text-gray-500 font-mono">Normalized: 100.0%</span>
               <button
                 onClick={handleSaveSnapshot}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold transition-all shadow-xs cursor-pointer font-mono"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer font-mono border border-amber-500/30"
               >
                 <History className="w-3.5 h-3.5 text-claude-orange" />
                 <span>Save Snapshot</span>
@@ -1253,54 +1253,54 @@ export default function PortfolioOptimizationPage() {
               </div>
 
               {/* FEATURE #9: VALUE AT RISK (VaR) PANEL WITH 3 METHODS */}
-              <div className="p-4 rounded-2xl bg-stone-900 text-white">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-stone-800 gap-1 mb-3">
+              <div className="p-5 rounded-2xl bg-white border border-amber-200/90 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-amber-100 gap-1 mb-3.5">
                   <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-black uppercase tracking-wider font-mono text-stone-100">
+                    <ShieldCheck className="w-4.5 h-4.5 text-emerald-600" />
+                    <span className="text-xs font-black uppercase tracking-wider font-mono text-amber-950">
                       Value at Risk (VaR) Analysis • 95% Confidence (1-Year Horizon)
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono text-stone-400">
+                  <span className="text-[10px] font-mono text-stone-500">
                     Evaluator Doc Section 05 • Institutional Risk Engine
                   </span>
                 </div>
 
-                <p className="text-[11px] text-stone-300 mb-4 leading-relaxed">
-                  <strong>Plain-English Risk Guarantee:</strong> There is a 95% statistical probability that your total annual downside
-                  loss will not exceed the amounts below. Bloomberg charges institutional funds $24,000/year for this PORT computation.
+                <p className="text-xs text-stone-700 mb-4 leading-relaxed font-sans">
+                  <strong className="text-amber-950 font-bold">Plain-English Risk Guarantee:</strong> There is a 95% statistical probability that your total annual downside
+                  loss will not exceed the amounts below.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
                   {/* Method 1: Parametric */}
-                  <div className="p-3 rounded-xl bg-stone-800/90 border border-stone-700">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold block">1. Parametric VaR</span>
-                    <span className="text-base font-black text-rose-400 block my-0.5">
+                  <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80">
+                    <span className="text-[10px] text-amber-800 uppercase font-bold block">1. Parametric VaR</span>
+                    <span className="text-base font-black text-rose-600 block my-0.5">
                       -${fmtUSD(Math.abs(activeMetrics.varParametric))}
                     </span>
-                    <span className="text-[10px] text-gray-400 block leading-tight">
+                    <span className="text-[10px] text-stone-600 block leading-tight font-sans">
                       Gaussian variance-covariance distribution ($\mu - 1.645\sigma$).
                     </span>
                   </div>
 
                   {/* Method 2: Historical */}
-                  <div className="p-3 rounded-xl bg-stone-800/90 border border-stone-700">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold block">2. Historical VaR</span>
-                    <span className="text-base font-black text-rose-400 block my-0.5">
+                  <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80">
+                    <span className="text-[10px] text-amber-800 uppercase font-bold block">2. Historical VaR</span>
+                    <span className="text-base font-black text-rose-600 block my-0.5">
                       -${fmtUSD(Math.abs(activeMetrics.varHistorical))}
                     </span>
-                    <span className="text-[10px] text-gray-400 block leading-tight">
+                    <span className="text-[10px] text-stone-600 block leading-tight font-sans">
                       Empirical 5th percentile including 2020 & 2022 market shocks.
                     </span>
                   </div>
 
                   {/* Method 3: Monte Carlo */}
-                  <div className="p-3 rounded-xl bg-stone-800/90 border border-stone-700">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold block">3. Monte Carlo VaR</span>
-                    <span className="text-base font-black text-rose-400 block my-0.5">
+                  <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80">
+                    <span className="text-[10px] text-amber-800 uppercase font-bold block">3. Monte Carlo VaR</span>
+                    <span className="text-base font-black text-rose-600 block my-0.5">
                       -${fmtUSD(Math.abs(activeMetrics.varMonteCarlo))}
                     </span>
-                    <span className="text-[10px] text-gray-400 block leading-tight">
+                    <span className="text-[10px] text-stone-600 block leading-tight font-sans">
                       10,000 multi-asset correlated stochastic simulation trials.
                     </span>
                   </div>
