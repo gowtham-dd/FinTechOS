@@ -94,20 +94,30 @@ class MLRegimeModule(BaseStrategyModule):
         for r in range(n_regimes):
             mask = (regime_labels == r)
             n_samples = np.sum(mask)
-            mean_ret = float(np.mean(ret[mask]) * 252) if n_samples > 0 else 0.0
-            ann_vol = float(np.std(ret[mask]) * np.sqrt(252)) if n_samples > 0 else 0.0
-            
+            if n_samples > 0:
+                daily_mean = float(np.mean(ret[mask]))
+                # Annualized mean return clipped to realistic bounds [-100%, +200%]
+                mean_ret = float(np.clip(daily_mean * 252, -1.0, 2.0))
+                ann_vol = float(np.std(ret[mask]) * np.sqrt(252))
+            else:
+                mean_ret = 0.0
+                ann_vol = 0.0
+
             # Transition self-loop probability P(S_t = r | S_{t-1} = r)
             self_loop_prob = float(transition_matrix[r, r]) if r < transition_matrix.shape[0] else 0.8
             expected_duration = round(1.0 / (1.0 - self_loop_prob + 1e-6), 1)
 
-            # Interpret Regime Label
-            if mean_ret > 0.05 and ann_vol < 0.25:
-                label_name = "Bull / Low Volatility"
-            elif mean_ret < -0.05:
-                label_name = "Bear / Downtrend"
-            elif ann_vol >= 0.25:
-                label_name = "High Volatility Crisis"
+            # Smart Regime Labeling
+            if mean_ret > 0.15 and ann_vol < 0.35:
+                label_name = "Bullish Expansion"
+            elif mean_ret > 0.15 and ann_vol >= 0.35:
+                label_name = "High Volatility Rally"
+            elif mean_ret < -0.15 and ann_vol >= 0.35:
+                label_name = "Bearish Crisis / High Volatility"
+            elif mean_ret < -0.15:
+                label_name = "Bearish Downtrend"
+            elif ann_vol >= 0.35:
+                label_name = "High Volatility Turbulence"
             else:
                 label_name = "Sideways / Consolidation"
 
@@ -120,6 +130,7 @@ class MLRegimeModule(BaseStrategyModule):
                 "self_loop_prob": round(self_loop_prob, 4),
                 "expected_duration_days": expected_duration
             })
+
 
         return regime_labels, regimes_info, transition_matrix, state_probs
 
