@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-claude-cream text-claude-surface font-sans antialiased selection:bg-claude-amber selection:text-white;
+  }
+}
+
+/* Modern Professional Fintech Design Utilities */
+.pro-card {
+  @apply bg-white border border-claude-amber/20 shadow-sm hover:shadow-md rounded-2xl transition-all duration-200 backdrop-blur-sm;
+}
+
+.pro-card-amber {
+  @apply bg-gradient-to-br from-white to-claude-amber/5 border border-claude-amber/30 shadow-sm rounded-2xl transition-all duration-200;
+}
+
+.pro-card-dark {
+  @apply bg-claude-surface text-white border border-claude-surface/80 shadow-md rounded-2xl transition-all duration-200;
+}
+
+.pro-btn-primary {
+  @apply inline-flex items-center justify-center gap-2 bg-gradient-to-r from-claude-amber to-claude-orange text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm tracking-wide cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.pro-btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 bg-white text-claude-surface font-semibold px-5 py-2.5 rounded-xl border border-claude-amber/30 shadow-sm hover:bg-claude-amber/5 hover:border-claude-amber hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm tracking-wide cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.pro-btn-dark {
+  @apply inline-flex items-center justify-center gap-2 bg-claude-surface text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm hover:bg-claude-surface/90 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-sm tracking-wide cursor-pointer;
+}
+
+.pro-btn-outline {
+  @apply inline-flex items-center justify-center gap-1.5 bg-transparent text-claude-surface font-medium px-4 py-2 rounded-lg border border-claude-amber/30 hover:border-claude-amber hover:text-claude-orange hover:bg-claude-amber/5 transition-all duration-150 text-xs cursor-pointer;
+}
+
+.pro-badge {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide border transition-all;
+}
+
+.pro-input {
+  @apply bg-white border border-claude-amber/30 text-claude-surface rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-claude-amber/40 focus:border-claude-amber transition-all text-sm placeholder:text-claude-surface/40;
+}
+
+/* Modern Subtle Geometric Grid Background */
+.bg-grid-subtle {
+  background-color: #FAF6F0;
+  background-image: radial-gradient(rgba(217, 119, 6, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Smooth Modern Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF6F0;
+}
+::-webkit-scrollbar-thumb {
+  background: #D97706;
+  border-radius: 9999px;
+  border: 2px solid #FAF6F0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #EA580C;
+}
