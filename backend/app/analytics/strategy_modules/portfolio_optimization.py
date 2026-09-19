@@ -59,9 +59,9 @@ class PortfolioOptimizationModule(BaseStrategyModule):
 
         port_sharpes = (port_returns - rf) / (port_vols + 1e-9)
 
-        # Build Efficient Frontier scatter dataset (downsample to 500 points for UI rendering)
+        # Build Efficient Frontier scatter dataset (downsample to 250 points for responsive UI rendering)
         frontier_points = []
-        step = max(1, n_sims // 500)
+        step = max(1, n_sims // 250)
         for i in range(0, n_sims, step):
             weights_dict = {asset_names[j]: round(float(weights_matrix[i, j]), 4) for j in range(num_assets)}
             frontier_points.append({
@@ -70,6 +70,8 @@ class PortfolioOptimizationModule(BaseStrategyModule):
                 "sharpe": round(float(port_sharpes[i]), 4),
                 "weights": weights_dict
             })
+            if len(frontier_points) >= 250:
+                break
 
         # 2. Exact SciPy Optimization for Max Sharpe Ratio
         def negative_sharpe(w):
@@ -103,6 +105,8 @@ class PortfolioOptimizationModule(BaseStrategyModule):
 
         return {
             "assets": asset_names,
+            "mean_returns": {asset_names[j]: round(float(mean_returns.iloc[j]), 4) for j in range(num_assets)},
+            "cov_matrix": {asset_names[i]: {asset_names[j]: round(float(cov_matrix.iloc[i, j]), 4) for j in range(num_assets)} for i in range(num_assets)},
             "max_sharpe_portfolio": {
                 "return": round(max_sharpe_ret, 4),
                 "volatility": round(max_sharpe_vol, 4),
@@ -115,7 +119,7 @@ class PortfolioOptimizationModule(BaseStrategyModule):
                 "sharpe": round(min_vol_sharpe, 4),
                 "weights": min_vol_weights
             },
-            "efficient_frontier_samples": frontier_points,
+            "efficient_frontier_samples": frontier_points[:250],
             "recommendation": f"Optimal Capital Allocation for Max Sharpe ({round(max_sharpe_val, 2)}): Allocate {rec_str}."
         }
 
