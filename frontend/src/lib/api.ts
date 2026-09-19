@@ -1,4 +1,11 @@
-let configuredBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const getNormalizedBaseUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  const trimmed = envUrl.replace(/\/$/, "");
+  return trimmed.endsWith("/api/v1") ? trimmed : `${trimmed}/api/v1`;
+};
+
+let configuredBaseUrl = getNormalizedBaseUrl();
+
 
 async function smartFetch(path: string, init?: RequestInit): Promise<Response> {
   const primaryUrl = `${configuredBaseUrl}${path}`;

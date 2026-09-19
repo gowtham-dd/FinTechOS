@@ -797,15 +797,7 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-
-      {/* Auth Dialog Modal */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        user={authUser}
-        onAuthSuccess={handleAuthSuccess}
-        onLogout={handleLogout}
-      />
     </div>
   );
 }
+

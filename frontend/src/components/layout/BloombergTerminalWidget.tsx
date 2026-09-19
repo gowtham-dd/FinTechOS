@@ -78,7 +78,9 @@ export function BloombergTerminalWidget() {
     }
 
     setLoading(true);
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiBase = rawApiUrl.replace(/\/api\/v1\/?$/, "");
+
 
     try {
       const res = await fetch(`${apiBase}/api/v1/terminal/execute`, {

@@ -343,7 +343,8 @@ async def run_ml_regime_detection(req: MLRegimeRequest):
     """Runs HMM / K-Means ML market regime detection on real price return & volatility data"""
     asset_df = data_provider.get_asset_dataframe(req.asset or "NVDA")
     ml_mod = MLRegimeModule()
-    regime_labels, regime_info = ml_mod.fit_regimes(asset_df, n_regimes=req.n_regimes or 3, algorithm=req.algorithm or "HMM")
+    regime_labels, regime_info, transition_matrix, state_probs = ml_mod.fit_regimes(asset_df, n_regimes=req.n_regimes or 3, algorithm=req.algorithm or "HMM")
+
     
     timeline = []
     step = max(1, len(asset_df) // 150)

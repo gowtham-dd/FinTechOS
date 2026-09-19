@@ -55,8 +55,10 @@ export function AuthModal({ isOpen, onClose, user, onAuthSuccess, onLogout }: Au
     if (!validateForm()) return;
 
     setLoading(true);
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiBase = rawApiUrl.replace(/\/api\/v1\/?$/, "");
     const endpoint = mode === "signup" ? `${apiBase}/api/v1/auth/signup` : `${apiBase}/api/v1/auth/login`;
+
 
     try {
       const payload = mode === "signup"
@@ -91,7 +93,8 @@ export function AuthModal({ isOpen, onClose, user, onAuthSuccess, onLogout }: Au
   const handleDemoLogin = async () => {
     setErrorMsg("");
     setDemoLoading(true);
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiBase = rawApiUrl.replace(/\/api\/v1\/?$/, "");
 
     try {
       const res = await fetch(`${apiBase}/api/v1/auth/demo`, { method: "POST" });
