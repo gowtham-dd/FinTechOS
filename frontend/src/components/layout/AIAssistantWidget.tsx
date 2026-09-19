@@ -35,9 +35,13 @@ export function AIAssistantWidget() {
     ]);
   }, []);
 
+  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiBase = rawApiUrl.replace(/\/api\/v1\/?$/, "");
+
+
   const fetchActivitySummary = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/assistant/activity");
+      const res = await fetch(`${apiBase}/api/v1/assistant/activity`);
       if (res.ok) {
         const data = await res.json();
         setUserActivity(data.user_activity_summary || "");
@@ -69,7 +73,7 @@ export function AIAssistantWidget() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/assistant/chat", {
+      const res = await fetch(`${apiBase}/api/v1/assistant/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, session_id: "demo_session" })
@@ -89,16 +93,17 @@ export function AIAssistantWidget() {
         };
         setMessages((prev) => [...prev, botMsg]);
       } else {
-        const errBotMsg: ChatMessage = {
-          id: `err-${Date.now()}`,
-          role: "assistant",
-          content: "⚠️ **API Connection Error**: Unable to reach backend assistant server.",
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages((prev) => [...prev, errBotMsg]);
+        throw new Error(`HTTP ${res.status}`);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error("Assistant chat error:", e);
+      const errBotMsg: ChatMessage = {
+        id: `err-${Date.now()}`,
+        role: "assistant",
+        content: `⚠️ **Backend Connection Error**: Unable to reach FastAPI backend server at \`${apiBase}\`. Ensure your backend server is running (\`uv run uvicorn app.main:app --reload --port 8000\`).`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages((prev) => [...prev, errBotMsg]);
     } finally {
       setLoading(false);
     }
@@ -106,7 +111,7 @@ export function AIAssistantWidget() {
 
   const handleClearHistory = async () => {
     try {
-      await fetch("http://localhost:8000/api/v1/assistant/history?session_id=demo_session", { method: "DELETE" });
+      await fetch(`${apiBase}/api/v1/assistant/history?session_id=demo_session`, { method: "DELETE" });
       setMessages([
         {
           id: "welcome-reset",

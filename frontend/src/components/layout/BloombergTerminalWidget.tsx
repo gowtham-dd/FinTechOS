@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { Terminal, Maximize2, Minimize2, Plus, X, ChevronUp, ChevronDown, Play, Sparkles } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -19,6 +20,11 @@ interface TerminalTab {
 }
 
 export function BloombergTerminalWidget() {
+  const pathname = usePathname();
+
+  // Hide terminal CLI widget strictly on the Home Page ("/")
+  if (pathname === "/") return null;
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [tabs, setTabs] = useState<TerminalTab[]>([
@@ -72,9 +78,12 @@ export function BloombergTerminalWidget() {
     }
 
     setLoading(true);
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiBase = rawApiUrl.replace(/\/api\/v1\/?$/, "");
+
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/terminal/execute", {
+      const res = await fetch(`${apiBase}/api/v1/terminal/execute`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ command: rawCmd, tab_id: tabId })
@@ -108,9 +117,27 @@ export function BloombergTerminalWidget() {
             return t;
           })
         );
+      } else {
+        throw new Error(`HTTP Error ${res.status}`);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error("Terminal execution failed:", e);
+      const errItem: StreamItem = {
+        id: `err-${Date.now()}`,
+        command: rawCmd,
+        output: {
+          output_type: "HELP",
+          execution_ms: 0,
+          timestamp: new Date().toLocaleTimeString(),
+          data: {
+            text_summary: `⚠️ **Backend Connection Error**: Unable to reach FastAPI backend server at \`${apiBase}\`. Please ensure the backend server is running via \`uv run uvicorn app.main:app --reload --port 8000\` in your backend directory.`
+          }
+        },
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setTabs((prevTabs) =>
+        prevTabs.map((t) => (t.id === tabId ? { ...t, stream: [...t.stream, errItem] } : t))
+      );
     } finally {
       setLoading(false);
       setHistoryIndex(-1);

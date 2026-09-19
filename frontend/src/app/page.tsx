@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
+import { AuthModal } from "@/components/auth/AuthModal";
 import {
   Sparkles,
   ShieldCheck,
@@ -16,6 +17,7 @@ import {
   TrendingUp,
   TrendingDown,
   Layers,
+  User,
 } from "lucide-react";
 
 // Mock financial dataset for Panel 1 (Interactive Stock Chart)
@@ -136,9 +138,49 @@ const TICKER_CARDS = [
 export default function HomePage() {
   const router = useRouter();
 
-  // Command Center States
+  // Command Center & Auth States
   const [selectedAsset, setSelectedAsset] = useState<"NVDA" | "BTC" | "SPX">("NVDA");
   const [selectedTimeframe, setSelectedTimeframe] = useState<"1D" | "1M" | "1Y" | "ALL">("1Y");
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authUser, setAuthUser] = useState<any>(null);
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("fintech_os_auth_user");
+      if (stored) setAuthUser(JSON.parse(stored));
+    } catch (e) {
+      console.error(e);
+    }
+
+    const handleRequireAuth = (e: any) => {
+      setAuthModalOpen(true);
+      if (e.detail?.targetHref) {
+        setPendingNavHref(e.detail.targetHref);
+      }
+    };
+    window.addEventListener("require-auth", handleRequireAuth);
+    return () => window.removeEventListener("require-auth", handleRequireAuth);
+  }, []);
+
+  const handleAuthSuccess = (token: string, user: any) => {
+    localStorage.setItem("fintech_os_auth_token", token);
+    localStorage.setItem("fintech_os_auth_user", JSON.stringify(user));
+    setAuthUser(user);
+    if (pendingNavHref) {
+      const target = pendingNavHref;
+      setPendingNavHref(null);
+      router.push(target);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("fintech_os_auth_token");
+    localStorage.removeItem("fintech_os_auth_user");
+    setAuthUser(null);
+    setAuthModalOpen(false);
+    setPendingNavHref(null);
+  };
 
   // SVG Scalers for Panel 1 (Stock Chart)
   const currentAssetData = ASSET_SERIES[selectedAsset] || ASSET_SERIES.NVDA;
@@ -234,13 +276,14 @@ export default function HomePage() {
             <span>Launch Research Lab</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
-          <Link
-            href="/assets"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-gray-200 text-claude-surface font-semibold text-sm hover:border-claude-orange/40 hover:text-claude-orange hover:bg-gray-50/50 shadow-xs transition-all cursor-pointer"
+          
+          <button
+            onClick={() => setAuthModalOpen(true)}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-amber-300 text-amber-950 font-extrabold text-sm hover:border-amber-500 hover:bg-amber-50/70 shadow-sm transition-all cursor-pointer group"
           >
-            <LucideLineChart className="w-4 h-4 text-claude-orange" />
-            <span>Explore Terminal</span>
-          </Link>
+            <User className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
+            <span>{authUser ? `Account: ${authUser.full_name || authUser.email}` : "Sign In / Sample Account"}</span>
+          </button>
         </div>
 
         {/* --------------------------------------------------------------------- */}
@@ -757,3 +800,4 @@ export default function HomePage() {
     </div>
   );
 }
+

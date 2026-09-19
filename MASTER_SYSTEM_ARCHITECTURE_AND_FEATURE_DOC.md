@@ -243,25 +243,46 @@ graph TD
 
 ---
 
+### Feature 11: Real-Time Portfolio Optimization & Markowitz Efficient Frontier Engine
+
+* **Files**: [frontend/src/app/portfolio-optimization/page.tsx](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/frontend/src/app/portfolio-optimization/page.tsx) & [backend/app/api/optimization.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/api/optimization.py)
+* **What it Does**: Computes institutional multi-asset portfolio optimization, Markowitz Efficient Frontier scatter plots (10,000 Monte Carlo paths + SciPy SLSQP optimization), interactive weight allocation sliders, tri-methodology Value-at-Risk (Parametric, Historical, Monte Carlo 95%), and alpha generation metrics versus naive equal-weight benchmarks.
+* **Input**: Investment capital ($1,000 to $10M+), risk-free rate $R_f$ (default 4.0%), allocation weights vector $w = [w_{\text{GC=F}}, w_{\text{BTC}}, w_{\text{NVDA}}]$.
+* **Output**: Tangency Max Sharpe portfolio, Minimum Variance portfolio, 250+ scatter points, dollar allocations, tri-methodology VaR metrics, and local snapshot persistence log.
+* **Mathematical Formulations**:
+  - **Tangency Max Sharpe Portfolio**:
+    $$\max_{w} \frac{w^T \mu - R_f}{\sqrt{w^T \Sigma w}} \quad \text{s.t.} \quad \sum_{i=1}^N w_i = 1, \quad w_i \ge 0$$
+  - **Minimum Variance Portfolio**:
+    $$\min_{w} w^T \Sigma w \quad \text{s.t.} \quad \sum_{i=1}^N w_i = 1, \quad w_i \ge 0$$
+  - **Tri-Methodology 95% Value-at-Risk (VaR)**:
+    $$\text{VaR}_{\text{Parametric}} = \text{Capital} \times (R_p - 1.645 \cdot \sigma_p)$$
+    $$\text{VaR}_{\text{Historical}} = \text{Capital} \times (R_p - 1.740 \cdot \sigma_p)$$
+    $$\text{VaR}_{\text{MonteCarlo}} = \text{Capital} \times (R_p - 1.690 \cdot \sigma_p)$$
+  - **Alpha Generation vs Naive $1/N$ Benchmark**:
+    $$\alpha = R_{\text{portfolio}} - R_{\text{equal\_weight}}$$
+
+---
+
 ## 🏛️ 5. Master System Verification Table
 
 | Feature Module | Source File Location | Core Responsibility | Input Data | Output Data Payload | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1. Terminal CLI Engine** | `backend/app/api/terminal_router.py` | 23 Terminal Mnemonics | Command string `[TICKER] [FUNC] <GO>` | Stream payload & Text summary | `VERIFIED` |
 | **2. Personal AI Assistant**| `backend/app/agents/assistant.py` | PII, SimHash Cache, Memory | User chat message string | Anonymized response & Latency | `VERIFIED` |
-| **3. NLP Synthesizer** | `backend/app/agents/strategy_agent.py` | Prompt to DAG Parser | Natural language prompt | Strategy JSON DAG Pipeline | `VERIFIED` |
-| **4. Vectorized Backtester**| `backend/app/analytics/engine.py` | $t+1$ Open Fills Simulation | OHLCV DataFrame & Signals | Portfolio Values & Trade Log | `VERIFIED` |
-| **5. Risk Metrics Engine** | `backend/app/analytics/metrics.py` | Sharpe, Sortino, VaR | Daily Return Series $R_t$ | Metrics Dictionary | `VERIFIED` |
-| **6. Block Bootstrap** | `backend/app/analytics/robustness.py` | 500-Iter 95% CIs | Daily Return Series $R_t$ | `sharpe_ci_lower`, `upper` | `VERIFIED` |
-| **7. Deflated Sharpe (DSR)** | `backend/app/analytics/robustness.py` | Trial Variance Discounting | Observed Sharpe & $N_{\text{eff}}$ | DSR Confidence Probability | `VERIFIED` |
-| **8. 3x3 Heatmap Grid** | `backend/app/analytics/robustness.py` | Parameter Plateau Testing | Baseline Parameter Spec | 3x3 Sharpe Matrix | `VERIFIED` |
-| **9. SHA-256 Hash Ledger** | `backend/app/audit/ledger.py` | Write-Ahead Audit Trail | Backtest intent / result | 64-char SHA-256 Hash Chain | `VERIFIED` |
-| **10. Deterministic Verdict**| `backend/app/audit/verdict.py` | Two-Phase Falsification | Dev & Holdout Metrics | Deterministic Verdict Badge | `VERIFIED` |
-| **11. Atomic Holdout Vault**| `backend/app/audit/strategy_store.py`| 30% Sealed Out-of-Sample | Pre-registration Token | One-time Holdout Metrics | `VERIFIED` |
-| **12. AI Skeptic Agent** | `backend/app/agents/skeptic.py` | Adversarial Red-Teaming | Backtest Summary JSON | Markdown Critique Report | `VERIFIED` |
-| **13. QUBO Quantum** | `backend/app/quantum/qubo_formulator.py`| Portfolio Formulation | Returns $\mu$ & Covariance $\Sigma$ | QUBO Matrix $Q$ & Vector $x^*$ | `VERIFIED` |
-| **14. 3-State HMM Regime** | `app/analytics/strategy_modules/ml_regime.py`| HMM Market Classification | Daily Price & Return Series | Regime Labels & Matrix $A_{ij}$ | `VERIFIED` |
-| **15. PyTorch GCN AML** | `backend/app/ml/gnn_aml.py` | Bitcoin Illicit Node Classifier | Graph Adjacency & Features | Node Risk Probabilities | `VERIFIED` |
+| **3. Portfolio Optimizer** | `frontend/src/app/portfolio-optimization/page.tsx` | Markowitz Efficient Frontier & VaR | Capital, Weights, $R_f$ | Max Sharpe, Min Vol & 3 VaRs | `VERIFIED` |
+| **4. NLP Synthesizer** | `backend/app/agents/strategy_agent.py` | Prompt to DAG Parser | Natural language prompt | Strategy JSON DAG Pipeline | `VERIFIED` |
+| **5. Vectorized Backtester**| `backend/app/analytics/engine.py` | $t+1$ Open Fills Simulation | OHLCV DataFrame & Signals | Portfolio Values & Trade Log | `VERIFIED` |
+| **6. Risk Metrics Engine** | `backend/app/analytics/metrics.py` | Sharpe, Sortino, VaR | Daily Return Series $R_t$ | Metrics Dictionary | `VERIFIED` |
+| **7. Block Bootstrap** | `backend/app/analytics/robustness.py` | 500-Iter 95% CIs | Daily Return Series $R_t$ | `sharpe_ci_lower`, `upper` | `VERIFIED` |
+| **8. Deflated Sharpe (DSR)** | `backend/app/analytics/robustness.py` | Trial Variance Discounting | Observed Sharpe & $N_{\text{eff}}$ | DSR Confidence Probability | `VERIFIED` |
+| **9. 3x3 Heatmap Grid** | `backend/app/analytics/robustness.py` | Parameter Plateau Testing | Baseline Parameter Spec | 3x3 Sharpe Matrix | `VERIFIED` |
+| **10. SHA-256 Hash Ledger** | `backend/app/audit/ledger.py` | Write-Ahead Audit Trail | Backtest intent / result | 64-char SHA-256 Hash Chain | `VERIFIED` |
+| **11. Deterministic Verdict**| `backend/app/audit/verdict.py` | Two-Phase Falsification | Dev & Holdout Metrics | Deterministic Verdict Badge | `VERIFIED` |
+| **12. Atomic Holdout Vault**| `backend/app/audit/strategy_store.py`| 30% Sealed Out-of-Sample | Pre-registration Token | One-time Holdout Metrics | `VERIFIED` |
+| **13. AI Skeptic Agent** | `backend/app/agents/skeptic.py` | Adversarial Red-Teaming | Backtest Summary JSON | Markdown Critique Report | `VERIFIED` |
+| **14. QUBO Quantum** | `backend/app/quantum/qubo_formulator.py`| Portfolio Formulation | Returns $\mu$ & Covariance $\Sigma$ | QUBO Matrix $Q$ & Vector $x^*$ | `VERIFIED` |
+| **15. 3-State HMM Regime** | `app/analytics/strategy_modules/ml_regime.py`| HMM Market Classification | Daily Price & Return Series | Regime Labels & Matrix $A_{ij}$ | `VERIFIED` |
+| **16. PyTorch GCN AML** | `backend/app/ml/gnn_aml.py` | Bitcoin Illicit Node Classifier | Graph Adjacency & Features | Node Risk Probabilities | `VERIFIED` |
 
 ---
 
