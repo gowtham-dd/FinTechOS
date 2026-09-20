@@ -76,77 +76,62 @@ export function FormattedText({ content, className = "" }: FormattedTextProps) {
   };
 
   const renderInlineFormatting = (text: string) => {
-    // Helper to parse **bold**, `code`, $math/currency$ inside a text string
-    const parts: React.ReactNode[] = [];
-    let remaining = text;
-    let keyIdx = 0;
+    if (!text) return null;
+    const tokenRegex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\$[^$]+\$)/g;
+    const tokens = text.split(tokenRegex);
 
-    while (remaining.length > 0) {
-      // Check for code blocks `code`
-      const codeMatch = remaining.match(/^`([^`]+)`/);
-      if (codeMatch) {
-        parts.push(
-          <code
-            key={keyIdx++}
-            className="px-1.5 py-0.5 mx-0.5 rounded bg-amber-100/90 text-amber-900 font-mono text-[11px] border border-amber-300/60 font-semibold"
-          >
-            {codeMatch[1]}
-          </code>
-        );
-        remaining = remaining.slice(codeMatch[0].length);
-        continue;
-      }
+    return tokens.map((part, idx) => {
+      if (!part) return null;
 
-      // Check for bold **bold**
-      const boldMatch = remaining.match(/^\*\*([^*]+)\*\*/);
-      if (boldMatch) {
-        parts.push(
-          <strong key={keyIdx++} className="font-bold text-amber-950">
-            {boldMatch[1]}
+      // Bold **text**
+      if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+        return (
+          <strong key={idx} className="font-extrabold text-amber-950">
+            {part.slice(2, -2)}
           </strong>
         );
-        remaining = remaining.slice(boldMatch[0].length);
-        continue;
       }
 
-      // Check for math or currency enclosed in $...$
-      const mathMatch = remaining.match(/^\$([^$]+)\$/);
-      if (mathMatch) {
-        const expr = mathMatch[1];
-        // If it's pure number (e.g. $71), render as styled currency badge
+      // Italic *text*
+      if (part.startsWith("*") && part.endsWith("*") && part.length >= 2 && !part.startsWith("**")) {
+        return (
+          <em key={idx} className="italic text-stone-800">
+            {part.slice(1, -1)}
+          </em>
+        );
+      }
+
+      // Code `code`
+      if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+        return (
+          <code
+            key={idx}
+            className="px-1.5 py-0.5 mx-0.5 rounded bg-amber-100/90 text-amber-900 font-mono text-[11px] border border-amber-300/60 font-semibold"
+          >
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+
+      // Math or currency $expr$
+      if (part.startsWith("$") && part.endsWith("$") && part.length >= 2) {
+        const expr = part.slice(1, -1);
         if (/^\d+(?:\.\d+)?$/.test(expr)) {
-          parts.push(
-            <span key={keyIdx++} className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-1 py-0.5 rounded text-[11px] font-mono">
+          return (
+            <span key={idx} className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-1 py-0.5 rounded text-[11px] font-mono">
               ${expr}
             </span>
           );
-        } else {
-          parts.push(
-            <span key={keyIdx++} className="font-mono bg-amber-50 text-amber-900 px-1 py-0.5 rounded border border-amber-200 text-[11px]">
-              {expr}
-            </span>
-          );
         }
-        remaining = remaining.slice(mathMatch[0].length);
-        continue;
+        return (
+          <span key={idx} className="font-mono bg-amber-50 text-amber-900 px-1 py-0.5 rounded border border-amber-200 text-[11px]">
+            {expr}
+          </span>
+        );
       }
 
-      // Find next token position
-      const nextSpecial = remaining.search(/[`*$]/);
-      if (nextSpecial === -1) {
-        parts.push(remaining);
-        break;
-      } else if (nextSpecial > 0) {
-        parts.push(remaining.slice(0, nextSpecial));
-        remaining = remaining.slice(nextSpecial);
-      } else {
-        // Fallback single character if no match pattern matched
-        parts.push(remaining[0]);
-        remaining = remaining.slice(1);
-      }
-    }
-
-    return parts;
+      return <span key={idx}>{part}</span>;
+    });
   };
 
   return <div className={`formatted-text-container ${className}`}>{lines.map(renderFormattedLine)}</div>;

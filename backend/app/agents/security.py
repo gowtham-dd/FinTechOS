@@ -35,13 +35,17 @@ class GuardrailEngine:
     and out-of-domain requests (medical, legal advice, gaming, non-fintech topics).
     """
     JAILBREAK_PATTERNS = [
-        r'(?i)ignore\s+(all\s+)?(previous|above)\s+instructions',
+        r'(?i)ignore\s+(all\s+)?(previous|above|system)\s+instructions',
         r'(?i)you\s+are\s+now\s+in\s+dan\s+mode',
         r'(?i)do\s+anything\s+now',
         r'(?i)reveal\s+(your\s+)?system\s+prompt',
-        r'(?i)bypass\s+(safety|guardrails)',
-        r'(?i)act\s+as\s+an\s+unrestricted',
-        r'(?i)disregard\s+all\s+rules'
+        r'(?i)bypass\s+(safety|guardrails|security)',
+        r'(?i)act\s+as\s+an\s+(unrestricted|unfiltered|jailbroken)',
+        r'(?i)disregard\s+all\s+(rules|constraints|system)',
+        r'(?i)jailbreak',
+        r'(?i)prompt\s+injection',
+        r'(?i)<\|im_start\|>',
+        r'(?i)\[system\s+prompt\]'
     ]
 
     OUT_OF_DOMAIN_PATTERNS = [
@@ -59,12 +63,12 @@ class GuardrailEngine:
         # Check for jailbreak / prompt injection
         for pattern in self.JAILBREAK_PATTERNS:
             if re.search(pattern, text):
-                return False, "JAILBREAK_ATTEMPT_DETECTED: Prompt injection or system instruction override prohibited."
+                return False, "Prompt injection or system instruction override attempt detected."
 
         # Check for out-of-domain topics
         for pattern in self.OUT_OF_DOMAIN_PATTERNS:
             if re.search(pattern, text):
-                return False, "OUT_OF_DOMAIN_REQUEST: FinTech Agent OS Assistant is restricted strictly to quantitative finance, trading strategies, overfitting audits, and platform navigation."
+                return False, "FinTech Agent OS Assistant is restricted strictly to quantitative finance, trading strategies, overfitting audits, and platform navigation."
 
         return True, "OK"
 

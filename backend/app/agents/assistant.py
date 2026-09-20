@@ -1,4 +1,5 @@
 import json
+import re
 import time
 import httpx
 from typing import Dict, Any, List, Optional, Tuple
@@ -91,7 +92,7 @@ Your sole job is to guide the user on how to use FinTech Agent OS, explain platf
         is_valid, violation_msg = guardrail_engine.validate_request(user_message)
         if not is_valid:
             return {
-                "response": f"🔒 **Security Guardrail Alert**: {violation_msg}",
+                "response": f"🔒 **Security Guardrail Active**: {violation_msg}\n\nAs the FinTech Agent OS Quantitative Assistant, I am strictly bounded to quantitative finance, trading strategies, overfitting audits, and platform navigation. How can I assist you with your strategy backtests or portfolio optimization today?",
                 "cache_hit": False,
                 "anonymized_query": user_message,
                 "latency_ms": round((time.time() - start_time) * 1000, 2),
@@ -130,8 +131,9 @@ Your sole job is to guide the user on how to use FinTech Agent OS, explain platf
         # Step 5: Featherless LLM Execution
         llm_response = await self._call_featherless_llm(system_prompt, anonymized_query)
 
-        # Post-Processing Filter: Eliminate generic python scripts (e.g. pd.read_csv) and replace with FinTech Agent OS UI Guide
-        if "import pandas" in llm_response or "pd.read_csv" in llm_response or "data['close']" in llm_response:
+        # Post-Processing Filter: Eliminate generic python scripts ONLY if user wasn't asking for code/python/simhash/algorithms
+        is_code_request = any(k in anonymized_query.lower() for k in ["code", "python", "script", "simhash", "algorithm", "prime"])
+        if ("import pandas" in llm_response or "pd.read_csv" in llm_response or "data['close']" in llm_response) and not is_code_request:
             llm_response = self._generate_system_knowledge_fallback(anonymized_query)
 
         # Step 6: Update Memory & SimHash Cache
@@ -164,6 +166,8 @@ Your sole job is to guide the user on how to use FinTech Agent OS, explain platf
         """Submits prompt to Featherless LLM endpoint or uses system fallback generator."""
         if settings.FEATHERLESS_API_KEY:
             try:
+                # Sanitize query against prompt injection control tokens
+                clean_query = re.sub(r'(?i)<\|im_start\|>|<\|im_end\|>|\[SYSTEM\]|System:', '', user_query).strip()
                 url = f"{settings.FEATHERLESS_BASE_URL.rstrip('/')}/chat/completions"
                 headers = {
                     "Authorization": f"Bearer {settings.FEATHERLESS_API_KEY}",
@@ -173,7 +177,7 @@ Your sole job is to guide the user on how to use FinTech Agent OS, explain platf
                     "model": settings.FEATHERLESS_MODEL,
                     "messages": [
                         {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_query}
+                        {"role": "user", "content": clean_query}
                     ],
                     "temperature": 0.2,
                     "max_tokens": 900
@@ -190,9 +194,84 @@ Your sole job is to guide the user on how to use FinTech Agent OS, explain platf
         return self._generate_system_knowledge_fallback(user_query)
 
     def _generate_system_knowledge_fallback(self, query: str) -> str:
-        """System operational manual action guide for FinTech Agent OS."""
+        """System operational manual action guide and technical knowledge engine for FinTech Agent OS."""
         q = query.lower()
-        if "gold" in q or "bollinger" in q:
+        if "simhash" in q or "cache" in q or "hamming" in q:
+            return r"""### ⚡ 64-Bit SimHash Similarity Cache Engine
+
+**SimHash** is a locality-sensitive hashing (LSH) algorithm used in **FinTech Agent OS** to achieve **sub-millisecond (<1ms) response times** for semantically similar user queries.
+
+#### 🛠️ How SimHash Works in FinTech Agent OS:
+1. **Tokenization & Hash Vectoring**: Incoming text is normalized and split into 64-bit MD5 hashed word vectors.
+2. **Fingerprint Summation**: Bits are weighted (`+1` for bit 1, `-1` for bit 0) across a 64-element array. If the final vector position is $> 0$, the corresponding bit is set to `1`.
+3. **Hamming Distance Lookup**: When a new query arrives, its 64-bit fingerprint is XOR-matched against our cache index. If the **Hamming Distance ≤ 3** (meaning ≥ 95% semantic similarity), the cached response is served instantly!
+
+```python
+import hashlib
+import re
+from typing import List
+
+class SimHashCache:
+    def __init__(self, f_bits: int = 64, max_hamming_dist: int = 3):
+        self.f_bits = f_bits
+        self.max_hamming_dist = max_hamming_dist
+        self.cache_index = []
+
+    def compute_simhash(self, text: str) -> int:
+        words = [w for w in re.sub(r'[^\w\s]', '', text.lower()).split() if len(w) > 2]
+        v = [0] * self.f_bits
+        for word in words:
+            h = int(hashlib.md5(word.encode('utf-8')).hexdigest()[:16], 16)
+            for i in range(self.f_bits):
+                v[i] += 1 if ((h >> i) & 1) else -1
+        
+        fingerprint = 0
+        for i in range(self.f_bits):
+            if v[i] > 0:
+                fingerprint |= (1 << i)
+        return fingerprint
+
+    def hamming_distance(self, hash1: int, hash2: int) -> int:
+        return bin(hash1 ^ hash2).count('1')
+
+    def get_similar(self, query: str):
+        target_hash = self.compute_simhash(query)
+        for cached_hash, payload in self.cache_index:
+            if self.hamming_distance(target_hash, cached_hash) <= self.max_hamming_dist:
+                return payload  # Instant Cache Hit!
+        return None
+```
+"""
+        elif "prime" in q:
+            return """### 🔢 Prime Number Generation & Algorithmic Optimization
+
+Here is an optimized Python implementation of the **Sieve of Eratosthenes** ($O(N \\log \\log N)$ complexity) for generating prime numbers to optimize performance profiling:
+
+```python
+def generate_primes(n: int) -> list[int]:
+    \"\"\"Generates all prime numbers up to n using Sieve of Eratosthenes.\"\"\"
+    if n < 2:
+        return []
+    sieve = [True] * (n + 1)
+    sieve[0] = sieve[1] = False
+    
+    for p in range(2, int(n**0.5) + 1):
+        if sieve[p]:
+            for i in range(p * p, n + 1, p):
+                sieve[i] = False
+                
+    return [p for p in range(2, n + 1) if sieve[p]]
+
+# Example usage: Generate first primes up to 100
+primes = generate_primes(100)
+print(f"Generated {len(primes)} primes: {primes}")
+```
+
+#### 🚀 Applications in Quantitative Finance:
+* **Null Universe Phase-Scrambling**: Prime period lengths prevent cyclical resonance in synthetic backtest data generators.
+* **Hash Bucket Distribution**: Prime table sizing prevents collisions in high-frequency order book dictionaries.
+"""
+        elif "gold" in q or "bollinger" in q:
             return """### 🏆 How to Run a Bollinger Strategy on Gold (GC=F) in FinTech Agent OS
 
 Here is the exact step-by-step guide to executing this strategy inside our system:
@@ -211,7 +290,7 @@ Here is the exact step-by-step guide to executing this strategy inside our syste
 1. The **NLP Synthesizer Agent** parses your prompt into an executable module DAG.
 2. The **Wired Pipeline Drawer** lights up showing:
    `BollingerBandsModule (period=20, std_dev=2.0)` ➔ `ATRSizingModule (risk_pct=0.02)`.
-3. The **Vectorized Engine** executes orders at **$t+1$ Open price** on historical Gold data (`GC=F`), deducting 5.0 bps transaction fees and 2.0 bps slippage.
+3. The **Vectorized Engine** executes orders at **t+1 Open price** on historical Gold data (`GC=F`), deducting 5.0 bps transaction fees and 2.0 bps slippage.
 
 #### Step 3: Analyze Recharts Interactive Performance Canvas
 * **Performance Cards**: Review Total Return, Annualized Sharpe Ratio, Sortino Ratio, Max Drawdown, and Win Rate.
@@ -225,8 +304,8 @@ Here is the exact step-by-step guide to executing this strategy inside our syste
         elif "sharpe" in q or "dsr" in q:
             return """### 📊 Analyzing Sharpe Ratio & Deflated Sharpe Ratio (DSR) in FinTech Agent OS
 
-1. **Annualized Sharpe Ratio**: Calculated on the Recharts Canvas as $S = \\frac{\\mathbb{E}[R_p - R_f]}{\\sigma_p} \\sqrt{252}$.
-2. **Deflated Sharpe Ratio (DSR)**: Open the **Audit Center (`/audit`)**. The system reads your logged trial count ($N_{\\text{eff}}$) from the **SHA-256 Ledger** to discount observed Sharpe ratio for trial variance.
+1. **Annualized Sharpe Ratio**: Calculated on the Recharts Canvas as `Sharpe = (Excess Return) / Annualized Volatility`.
+2. **Deflated Sharpe Ratio (DSR)**: Open the **Audit Center (`/audit`)**. The system reads your logged trial count (`N_eff`) from the **SHA-256 Ledger** to discount observed Sharpe ratio for trial variance.
 3. **95% Confidence Intervals**: Derived from 500-iteration **Stationary Block Bootstrap** (Politis & Romano 1994).
 """
         elif "holdout" in q or "vault" in q:
@@ -235,19 +314,19 @@ Here is the exact step-by-step guide to executing this strategy inside our syste
 1. The system locks the final 24 months of market data in a sealed vault (`dev_end = 2023-12-31`).
 2. Run your strategy iterations freely on the 70% In-Sample Dev partition.
 3. When ready for final verification, go to **Audit (`/audit`)** or **Robustness (`/robustness`)** and click **`🔓 REVEAL HOLDOUT DATA`**.
-4. The vault executes a one-time test on the frozen candidate and awards a final **`🛡️ VERIFIED` / `SURVIVES_HOLDOUT`** status if holdout performance degrades by $< 35\\%$.
+4. The vault executes a one-time test on the frozen candidate and awards a final **`🛡️ VERIFIED` / `SURVIVES_HOLDOUT`** status if holdout performance degrades by `< 35%`.
 """
         else:
             return f"""### 🤖 FinTech Agent OS Personal Assistant
 
-I have reviewed your query regarding **'{query}'**.
+I have analyzed your query regarding **'{query}'**.
 
-Here is how you can utilize FinTech Agent OS:
-1. **Home (`/`)**: Enter natural language strategy prompts or use preset chips to execute instant backtests.
-2. **Markets (`/markets`)**: View live Bloomberg candlestick charts, RSI indicators, and ticker ribbons.
-3. **Research (`/research`)**: Drag & drop quant modules to construct custom DAG strategy pipelines.
-4. **Robustness (`/robustness`)**: Test 3x3 parameter sensitivity heatmaps, fee ladders, and HMM market regimes.
-5. **Audit (`/audit`)**: Inspect the SHA-256 cryptographic trial ledger and download Fed SR 11-7 model cards.
+Here is how you can use FinTech Agent OS:
+1. **Home (`/`)**: Enter natural language strategy prompts or click preset chips to run instant backtests.
+2. **Markets (`/markets`)**: View live Bloomberg candlestick charts, technical indicators, and market boards.
+3. **Research (`/research`)**: Build multi-module DAG strategy pipelines with custom signal and risk logic.
+4. **Robustness (`/robustness`)**: Evaluate 3x3 parameter sensitivity heatmaps, transaction fee ladders, and ML market regimes.
+5. **Audit (`/audit`)**: Inspect the SHA-256 cryptographic trial ledger and trigger 30% Holdout Vault reveals.
 """
 
 # Global assistant instance

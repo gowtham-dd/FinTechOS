@@ -42,7 +42,7 @@ graph TD
     D --> E["5. Financial Metrics Engine<br/>(Sharpe, Sortino, VaR, MaxDD)"]
     E --> F["6. Stationary Block Bootstrap<br/>(500 Iterations ➔ 95% CIs)"]
     F --> G["7. Robustness & Regime Grid<br/>(3x3 Parameter Heatmap + Fee Ladder)"]
-    G --> H["8. Write-Ahead Audit Ledger<br/>(SQLite + SHA-256 Hash Chain)"]
+    G --> H["8. Write-Ahead Audit Ledger<br/>(MongoDB Atlas + SHA-256 Hash Chain)"]
     H --> I["9. Adversarial AI Skeptic<br/>(Red-Teaming & Overfitting Audit)"]
     I --> J["10. Deterministic Verdict Engine<br/>(VERIFIED / OVERFIT / REJECTED)"]
 ```
@@ -147,8 +147,9 @@ Each quant module implements a standardized base protocol interface (`BaseStrate
 
 ---
 
-### 3. `app/agents` — Multi-Agent Intelligence Swarm
+### 3. `app/agents` — Multi-Agent Intelligence Swarm & LLM Inference Engine
 
+* **Featherless.ai LLM Inference Integration**: Strategy formulation, prompt parsing, and assistant reasoning are powered by the **Featherless.ai API** (`https://api.featherless.ai/v1`) using the state-of-the-art **`unsloth/Llama-3.3-70B-Instruct`** model specified in `.env` (`FEATHERLESS_MODEL=unsloth/Llama-3.3-70B-Instruct`).
 * 📄 [strategy_agent.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/agents/strategy_agent.py): Natural language prompt parser and strategy dynamic graph synthesizer. Translates user prompts like *"Build an ATR position-sized Bollinger Band strategy on Gold"* into fully wired multi-module JSON DAG pipelines.
 * 📄 [skeptic.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/agents/skeptic.py): Adversarial Red-Team Agent. Analyzes backtest results for signs of curve-fitting, lookahead leakage, unrealistic liquidity assumptions, and regime fragility.
 * 📄 [reporter.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/agents/reporter.py): Institutional Reporter Agent. Generates compliant Federal Reserve SR 11-7 Model Risk Governance Documentation tear-sheets.
@@ -156,13 +157,13 @@ Each quant module implements a standardized base protocol interface (`BaseStrate
 
 ---
 
-### 4. `app/audit` — Immutable Audit Ledger & Verification Engine
+### 4. `app/audit` & `app/db` — MongoDB Persistence & Immutable Audit Engine
 
-* 📄 [strategy_store.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/audit/strategy_store.py): SQLite persistence database (`strategy_history.db`) maintaining all historical run outputs, prompts, pipelines, metrics, and AI reasoning.
+* 📄 [mongo.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/db/mongo.py) & [strategy_store.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/audit/strategy_store.py): Asynchronous **MongoDB Atlas** persistence database (driven by `Motor` & `PyMongo`) maintaining all historical strategy runs, user activity logs, prompts, pipelines, metrics, and AI reasoning.
 * 📄 [verdict.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/audit/verdict.py): **Deterministic 2-Phase Verification Engine**:
   * **Phase A**: Minimum Detectable Effect (MDE) Statistical Power analysis (`>50%`), selection-aware p-value check (`p < 0.10`).
   * **Phase B**: Atomic Holdout evaluation. Checks whether out-of-sample Sharpe ratio degrades by more than 35% relative to in-sample performance.
-* 📄 [ledger.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/audit/ledger.py): Cryptographic SHA-256 Hash Chain ledger ensuring tamper-proof audit trails for compliance.
+* 📄 [ledger.py](file:///d:/Data%20Science/SIH/FinTech%20Agent%20OS/backend/app/audit/ledger.py): Cryptographic SHA-256 Hash Chain ledger stored in MongoDB ensuring tamper-proof audit trails for compliance.
 
 ---
 

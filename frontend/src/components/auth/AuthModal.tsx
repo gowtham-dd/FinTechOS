@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { X, Lock, Mail, User, ArrowRight, Sparkles, LogOut, CheckCircle2, Zap, AlertCircle } from "lucide-react";
+import { X, Lock, Mail, User, ArrowRight, Sparkles, LogOut, CheckCircle2, Zap, AlertCircle, Key } from "lucide-react";
+import { ApiKeyModal } from "./ApiKeyModal";
 
 interface UserProfile {
   id: string;
@@ -25,6 +26,7 @@ export function AuthModal({ isOpen, onClose, user, onAuthSuccess, onLogout }: Au
   const [demoLoading, setDemoLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [toastMsg, setToastMsg] = useState("");
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   if (!isOpen) return null;
 
@@ -177,20 +179,31 @@ export function AuthModal({ isOpen, onClose, user, onAuthSuccess, onLogout }: Au
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-between gap-3">
+              <div className="pt-2 space-y-2">
                 <button
-                  onClick={onClose}
-                  className="flex-1 py-2.5 px-4 rounded-xl border border-stone-300 hover:bg-stone-50 text-xs font-bold transition text-stone-700 cursor-pointer"
+                  type="button"
+                  onClick={() => setShowApiKeyModal(true)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-black text-xs shadow-md shadow-amber-600/20 transition flex items-center justify-center gap-2 cursor-pointer group"
                 >
-                  Continue Session
+                  <Key className="w-4 h-4 text-amber-100 group-hover:scale-110 transition-transform" />
+                  <span>Developer API Keys</span>
                 </button>
-                <button
-                  onClick={onLogout}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Sign Out</span>
-                </button>
+
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    onClick={onClose}
+                    className="flex-1 py-2.5 px-4 rounded-xl border border-stone-300 hover:bg-stone-50 text-xs font-bold transition text-stone-700 cursor-pointer"
+                  >
+                    Continue Session
+                  </button>
+                  <button
+                    onClick={onLogout}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -259,53 +272,59 @@ export function AuthModal({ isOpen, onClose, user, onAuthSuccess, onLogout }: Au
 
               {/* Error Alert Box */}
               {errorMsg && (
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium leading-relaxed flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-bold rounded-xl flex items-center gap-2 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-3.5">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 {mode === "signup" && (
                   <div>
-                    <label className="block text-xs font-bold text-stone-700 mb-1">Full Name</label>
+                    <label className="block text-[11px] font-extrabold uppercase text-stone-500 mb-1">
+                      Full Name
+                    </label>
                     <div className="relative">
-                      <User className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
+                      <User className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
                       <input
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Senior Quant Researcher"
-                        className="w-full pl-9 pr-3 py-2 rounded-xl border border-amber-200 text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition"
+                        placeholder="e.g. Gowtham Quant"
+                        className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-medium outline-hidden"
                       />
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">Email Address</label>
+                  <label className="block text-[11px] font-extrabold uppercase text-stone-500 mb-1">
+                    Email Address
+                  </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
+                    <Mail className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="researcher@fintech-os.io"
-                      className="w-full pl-9 pr-3 py-2 rounded-xl border border-amber-200 text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition"
+                      placeholder="quant@fintech-os.io"
+                      className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-medium outline-hidden"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-stone-700 mb-1">Password</label>
+                  <label className="block text-[11px] font-extrabold uppercase text-stone-500 mb-1">
+                    Password
+                  </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
+                    <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••••••"
-                      className="w-full pl-9 pr-3 py-2 rounded-xl border border-amber-200 text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition"
+                      placeholder="••••••••"
+                      className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-stone-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 bg-white font-medium outline-hidden"
                     />
                   </div>
                 </div>
@@ -331,6 +350,9 @@ export function AuthModal({ isOpen, onClose, user, onAuthSuccess, onLogout }: Au
           )}
         </div>
       </div>
+
+      {/* Render Big Developer API Key Modal */}
+      <ApiKeyModal isOpen={showApiKeyModal} onClose={() => setShowApiKeyModal(false)} />
     </div>
   );
 }
