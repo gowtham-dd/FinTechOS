@@ -79,7 +79,7 @@ export const AgentGrid: React.FC<AgentGridProps> = ({ agents, onSelectAgent }) =
         </div>
         <div className="flex items-center gap-2 text-claude-rust font-bold">
           <Sparkles className="w-4 h-4" />
-          <span>Groq Llama-3.3-70b + PyQUBO Quantum Annealing</span>
+          <span>Featherless API Llama-3.3-70b + PyQUBO Quantum Annealing</span>
         </div>
       </div>
     </div>

@@ -134,7 +134,17 @@ const INITIAL_SNAPSHOTS: SnapshotRecord[] = [
   },
 ];
 
+import { AuthGuard } from "@/components/auth/AuthGuard";
+
 export default function PortfolioOptimizationPage() {
+  return (
+    <AuthGuard>
+      <PortfolioOptimizationInner />
+    </AuthGuard>
+  );
+}
+
+function PortfolioOptimizationInner() {
   // Calculation & Optimization State
   const [loading, setLoading] = useState(false);
   const [simCount] = useState<number>(10000);

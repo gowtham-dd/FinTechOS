@@ -182,6 +182,18 @@ export default function HomePage() {
     setPendingNavHref(null);
   };
 
+  const handleProtectedNav = (e: React.MouseEvent, href: string) => {
+    try {
+      const token = localStorage.getItem("fintech_os_auth_token");
+      if (!token) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("require-auth", { detail: { targetHref: href } }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // SVG Scalers for Panel 1 (Stock Chart)
   const currentAssetData = ASSET_SERIES[selectedAsset] || ASSET_SERIES.NVDA;
   const chartWidth = 360;
@@ -270,6 +282,7 @@ export default function HomePage() {
         <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
           <Link
             href="/research"
+            onClick={(e) => handleProtectedNav(e, "/research")}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-claude-amber to-claude-orange text-white font-bold text-sm shadow-sm hover:brightness-105 hover:shadow-md transition-all cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
@@ -643,7 +656,7 @@ export default function HomePage() {
                 Type strategy prompts in plain English. Review Pydantic confirmation specs, observe 10-node workflow progress, and inspect equity curves against Buy & Hold and Null baselines.
               </p>
             </div>
-            <Link href="/research" className="pro-btn-secondary w-full text-xs py-2.5">
+            <Link href="/research" onClick={(e) => handleProtectedNav(e, "/research")} className="pro-btn-secondary w-full text-xs py-2.5">
               <span>Open Research Lab</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
@@ -661,7 +674,7 @@ export default function HomePage() {
                 Inspect raw OHLCV price series for GLD, BTC, NVDA, SPY, and more. Overlay technical indicators (SMA, EMA, RSI, Bollinger) and analyze weekly asset correlation matrices.
               </p>
             </div>
-            <Link href="/assets" className="pro-btn-secondary w-full text-xs py-2.5">
+            <Link href="/assets" onClick={(e) => handleProtectedNav(e, "/assets")} className="pro-btn-secondary w-full text-xs py-2.5">
               <span>Inspect Assets</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
@@ -679,7 +692,7 @@ export default function HomePage() {
                 Evaluate 3x3 parameter neighborhood heatmaps to catch fragile sharp peaks. Stress-test strategies across commission fee ladders (0-20 bps) and 2x2 market regimes.
               </p>
             </div>
-            <Link href="/robustness" className="pro-btn-secondary w-full text-xs py-2.5">
+            <Link href="/robustness" onClick={(e) => handleProtectedNav(e, "/robustness")} className="pro-btn-secondary w-full text-xs py-2.5">
               <span>View Robustness</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
@@ -697,7 +710,7 @@ export default function HomePage() {
                 Review un-editable SHA-256 trial logs, Deflated Sharpe Ratio (DSR), Probability of Backtest Overfitting (PBO), AI Skeptic Agent critiques, and download SR 11-7 model reports.
               </p>
             </div>
-            <Link href="/audit" className="pro-btn-secondary w-full text-xs py-2.5">
+            <Link href="/audit" onClick={(e) => handleProtectedNav(e, "/audit")} className="pro-btn-secondary w-full text-xs py-2.5">
               <span>Audit Center</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
@@ -715,7 +728,7 @@ export default function HomePage() {
                 Benchmark strategies against 1,000 empirical null universes. Run live judge-seed placebo tests to prove zero false positives on random data.
               </p>
             </div>
-            <Link href="/calibration" className="pro-btn-secondary w-full text-xs py-2.5">
+            <Link href="/calibration" onClick={(e) => handleProtectedNav(e, "/calibration")} className="pro-btn-secondary w-full text-xs py-2.5">
               <span>Test Calibration</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
@@ -733,7 +746,7 @@ export default function HomePage() {
                 Learn how atomic 2-phase holdout separation locks out data-peeking. Unlocks only after passing Phase 1 Dev metrics and pre-registering hashes.
               </p>
             </div>
-            <Link href="/research" className="pro-btn-dark w-full text-xs py-2.5">
+            <Link href="/research" onClick={(e) => handleProtectedNav(e, "/research")} className="pro-btn-dark w-full text-xs py-2.5">
               <span>Start Strategy Session</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
@@ -789,11 +802,11 @@ export default function HomePage() {
             <span>— Validation-First Quantitative Research Engine</span>
           </div>
           <div className="flex items-center gap-4 font-medium">
-            <Link href="/research" className="hover:text-claude-orange transition-colors">Research</Link>
-            <Link href="/assets" className="hover:text-claude-orange transition-colors">Assets</Link>
-            <Link href="/robustness" className="hover:text-claude-orange transition-colors">Robustness</Link>
-            <Link href="/audit" className="hover:text-claude-orange transition-colors">Audit</Link>
-            <Link href="/calibration" className="hover:text-claude-orange transition-colors">Calibration</Link>
+            <Link href="/research" onClick={(e) => handleProtectedNav(e, "/research")} className="hover:text-claude-orange transition-colors">Research</Link>
+            <Link href="/assets" onClick={(e) => handleProtectedNav(e, "/assets")} className="hover:text-claude-orange transition-colors">Assets</Link>
+            <Link href="/robustness" onClick={(e) => handleProtectedNav(e, "/robustness")} className="hover:text-claude-orange transition-colors">Robustness</Link>
+            <Link href="/audit" onClick={(e) => handleProtectedNav(e, "/audit")} className="hover:text-claude-orange transition-colors">Audit</Link>
+            <Link href="/calibration" onClick={(e) => handleProtectedNav(e, "/calibration")} className="hover:text-claude-orange transition-colors">Calibration</Link>
           </div>
         </div>
       </footer>

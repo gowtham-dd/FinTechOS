@@ -55,7 +55,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, index, onSelect }) 
       <div className="flex items-center justify-between pt-2 border-t border-mc-border/10 text-[11px] font-mono text-claude-muted">
         <span className="flex items-center gap-1">
           <Cpu className="w-3.5 h-3.5 text-claude-amber" />
-          <span>Groq Powered</span>
+          <span>Featherless API Powered</span>
         </span>
         <span className="flex items-center gap-1 text-claude-rust font-bold">
           <Zap className="w-3.5 h-3.5" />

@@ -48,7 +48,17 @@ import {
   Bar
 } from "recharts";
 
+import { AuthGuard } from "@/components/auth/AuthGuard";
+
 export default function ResearchLabPage() {
+  return (
+    <AuthGuard>
+      <ResearchLabInner />
+    </AuthGuard>
+  );
+}
+
+function ResearchLabInner() {
   const [activeTab, setActiveTab] = useState<"ai_chat" | "history_comparison" | "formulas_benchmark" | "monte_carlo" | "var_risk" | "classic_lab">("ai_chat");
 
   // AI Chat & Strategy Builder state
@@ -725,7 +735,7 @@ export default function ResearchLabPage() {
                     <tr>
                       <td className="p-3 font-semibold">Natural Language Strategy Creation</td>
                       <td className="p-3 font-bold text-emerald-700 bg-emerald-50/50 flex items-center gap-1">
-                        <Check className="w-4 h-4 text-emerald-600" /> LangChain + Groq LLM Auto-Wiring
+                        <Check className="w-4 h-4 text-emerald-600" /> LangChain + Featherless API LLM Auto-Wiring
                       </td>
                       <td className="p-3 text-rose-600 font-medium">Manual Python Code / BQL Queries</td>
                       <td className="p-3 text-rose-600 font-medium">Manual C# / Python Boilerplate</td>

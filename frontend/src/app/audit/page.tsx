@@ -4,7 +4,17 @@ import { Navbar } from "@/components/layout/Navbar";
 import { runExperiment, ExperimentSpec, RunResponse } from "@/lib/api";
 import { ShieldCheck, FileText, CheckCircle, AlertTriangle, Layers, Cpu, Award, Download, Database } from "lucide-react";
 
+import { AuthGuard } from "@/components/auth/AuthGuard";
+
 export default function AuditPage() {
+  return (
+    <AuthGuard>
+      <AuditInner />
+    </AuthGuard>
+  );
+}
+
+function AuditInner() {
   const [data, setData] = useState<RunResponse | null>(null);
   const [loading, setLoading] = useState(false);
 

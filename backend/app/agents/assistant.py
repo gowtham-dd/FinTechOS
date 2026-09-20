@@ -180,13 +180,19 @@ Your sole job is to guide the user on how to use FinTech Agent OS, explain platf
                         {"role": "user", "content": clean_query}
                     ],
                     "temperature": 0.2,
-                    "max_tokens": 900
+                    "max_tokens": 900,
+                    "presence_penalty": 0.1,
+                    "repetition_penalty": 1.1,
+                    "stop": ["<|eot_id|>", "<|im_end|>", "</s>"]
                 }
-                async with httpx.AsyncClient(timeout=12.0) as client:
+                async with httpx.AsyncClient(timeout=10.0) as client:
                     resp = await client.post(url, headers=headers, json=payload)
                     if resp.status_code == 200:
                         res_json = resp.json()
-                        return res_json["choices"][0]["message"]["content"].strip()
+                        raw_text = res_json["choices"][0]["message"]["content"].strip()
+                        # Post-process to eliminate token repetition loops (e.g., false!!!!!!!!)
+                        clean_text = re.sub(r'(!|\.|\?|-|=){3,}', r'\1\1', raw_text)
+                        return clean_text
             except Exception as e:
                 print(f"Featherless API call exception: {e}. Switching to system knowledge fallback.")
 

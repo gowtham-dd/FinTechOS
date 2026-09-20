@@ -5,7 +5,17 @@ import { runExperiment, revealHoldout, runMLRegimeDetection, ExperimentSpec, Run
 import { Sliders, Lock, Unlock, AlertTriangle, Layers, DollarSign, CheckCircle, Cpu, RefreshCw, Play } from "lucide-react";
 import { LineChart as ReLineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
+import { AuthGuard } from "@/components/auth/AuthGuard";
+
 export default function RobustnessPage() {
+  return (
+    <AuthGuard>
+      <RobustnessInner />
+    </AuthGuard>
+  );
+}
+
+function RobustnessInner() {
   const [data, setData] = useState<RunResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [revealing, setRevealing] = useState(false);

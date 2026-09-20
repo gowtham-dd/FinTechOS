@@ -701,16 +701,20 @@ function AssetsContent() {
   );
 }
 
+import { AuthGuard } from "@/components/auth/AuthGuard";
+
 export default function AssetsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-claude-cream flex items-center justify-center font-mono text-xs text-gray-500">
-          Loading Assets & Indicators Studio...
-        </div>
-      }
-    >
-      <AssetsContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-claude-cream flex items-center justify-center font-mono text-xs text-gray-500">
+            Loading Assets & Indicators Studio...
+          </div>
+        }
+      >
+        <AssetsContent />
+      </Suspense>
+    </AuthGuard>
   );
 }

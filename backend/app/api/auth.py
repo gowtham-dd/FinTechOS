@@ -2,6 +2,7 @@ import time
 import datetime
 import secrets
 import hashlib
+import asyncio
 import jwt
 import bcrypt
 from typing import Optional
@@ -9,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel, EmailStr
 from app.config import settings
 from app.db.mongo import mongo_db
+from app.db.user_db import user_db
 
 router = APIRouter(tags=["Authentication"])
 
@@ -32,7 +34,7 @@ class AuthTokenResponse(BaseModel):
     user: UserResponse
 
 def hash_password(password: str) -> str:
-    salt = bcrypt.gensalt()
+    salt = bcrypt.gensalt(rounds=10)
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -60,15 +62,11 @@ async def signup(req: SignupRequest):
     if len(req.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters long.")
 
-    coll = mongo_db.get_collection("users")
-    if coll is None:
-        raise HTTPException(status_code=500, detail="MongoDB Atlas connection unavailable.")
-
-    existing_user = coll.find_one({"email": email_clean})
+    existing_user = user_db.find_by_email(email_clean)
     if existing_user:
         raise HTTPException(status_code=400, detail="An account with this email already exists.")
 
-    hashed_pw = hash_password(req.password)
+    hashed_pw = await asyncio.to_thread(hash_password, req.password)
     user_id = f"usr_{int(time.time() * 1000)}"
     user_doc = {
         "user_id": user_id,
@@ -77,7 +75,7 @@ async def signup(req: SignupRequest):
         "full_name": req.full_name or "Quant Researcher",
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
     }
-    coll.insert_one(user_doc)
+    user_db.create_user(user_doc)
 
     token = create_jwt_token(user_id, email_clean, user_doc["full_name"])
     return {
@@ -93,12 +91,13 @@ async def signup(req: SignupRequest):
 @router.post("/auth/login", response_model=AuthTokenResponse)
 async def login(req: LoginRequest):
     email_clean = req.email.strip().lower()
-    coll = mongo_db.get_collection("users")
-    if coll is None:
-        raise HTTPException(status_code=500, detail="MongoDB Atlas connection unavailable.")
 
-    user = coll.find_one({"email": email_clean})
-    if not user or not verify_password(req.password, user.get("password_hash", "")):
+    user = user_db.find_by_email(email_clean)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password credentials.")
+
+    is_valid = await asyncio.to_thread(verify_password, req.password, user.get("password_hash", ""))
+    if not is_valid:
         raise HTTPException(status_code=401, detail="Invalid email or password credentials.")
 
     token = create_jwt_token(user["user_id"], user["email"], user.get("full_name", "Quant Researcher"))
@@ -115,25 +114,27 @@ async def login(req: LoginRequest):
 @router.post("/auth/demo", response_model=AuthTokenResponse)
 async def login_demo():
     """1-Click Sample Quant Account Access for testing & evaluation."""
+    t0 = time.time()
     demo_email = "gowtham@fintech-os.io"
     demo_name = "Gowtham"
-    coll = mongo_db.get_collection("users")
     
     user_id = "usr_gowtham_quant_master"
-    if coll is not None:
-        user = coll.find_one({"email": demo_email})
-        if not user:
-            user_doc = {
-                "user_id": user_id,
-                "email": demo_email,
-                "password_hash": hash_password("gowtham123"),
-                "full_name": demo_name,
-                "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
-            }
-            coll.insert_one(user_doc)
-        else:
-            user_id = user["user_id"]
-            demo_name = user.get("full_name", demo_name)
+    user = user_db.find_by_email(demo_email)
+    t1 = time.time()
+    if not user:
+        hashed_pw = await asyncio.to_thread(hash_password, "gowtham123")
+        user_doc = {
+            "user_id": user_id,
+            "email": demo_email,
+            "password_hash": hashed_pw,
+            "full_name": demo_name,
+            "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        user_db.create_user(user_doc)
+    else:
+        user_id = user["user_id"]
+        demo_name = user.get("full_name", demo_name)
+    t2 = time.time()
 
     token = create_jwt_token(user_id, demo_email, demo_name)
     return {

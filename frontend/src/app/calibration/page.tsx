@@ -4,7 +4,17 @@ import { Navbar } from "@/components/layout/Navbar";
 import { fetchCalibrationCard, runPlaceboTest } from "@/lib/api";
 import { Award, RefreshCw, CheckCircle, AlertTriangle, Layers, Play, ShieldCheck, Zap } from "lucide-react";
 
+import { AuthGuard } from "@/components/auth/AuthGuard";
+
 export default function CalibrationPage() {
+  return (
+    <AuthGuard>
+      <CalibrationInner />
+    </AuthGuard>
+  );
+}
+
+function CalibrationInner() {
   const [calibrationData, setCalibrationData] = useState<any>(null);
   const [judgeSeed, setJudgeSeed] = useState(742);
   const [placeboResult, setPlaceboResult] = useState<any>(null);
